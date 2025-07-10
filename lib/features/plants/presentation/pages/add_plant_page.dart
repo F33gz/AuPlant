@@ -1,0 +1,439 @@
+import 'package:flutter/material.dart';
+import '../../../../core/services/plant_service.dart';
+import '../../../../app/theme/app_colors.dart';
+
+class AddPlantPage extends StatefulWidget {
+  const AddPlantPage({super.key});
+
+  @override
+  State<AddPlantPage> createState() => _AddPlantPageState();
+}
+
+class _AddPlantPageState extends State<AddPlantPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _locationController = TextEditingController();
+  final _deviceIdController = TextEditingController();
+  final _accessTokenController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final PlantService _plantService = PlantService();
+  
+  String _selectedEmoji = '🌱';
+  bool _isLoading = false;
+
+  final List<String> _plantEmojis = [
+    '🌱', '🌿', '🌾', '🌵', '🌳', '🌲', '🌴', 
+    '🌸', '🌼', '🌹', '💐', '🌻', '🌺', '🌷'
+  ];
+
+  final List<String> _plantTypes = [
+    'Vegetable Garden',
+    'Flower Garden',
+    'Herb Garden',
+    'Fruit Tree',
+    'Houseplant',
+    'Succulent',
+    'Tree',
+    'Grass/Lawn',
+    'Other',
+  ];
+
+  String _selectedPlantType = 'Vegetable Garden';
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _locationController.dispose();
+    _deviceIdController.dispose();
+    _accessTokenController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.backgroundLight,
+      appBar: AppBar(
+        backgroundColor: AppColors.backgroundLight,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Add New Plant',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Plant Name
+              Text(
+                'Plant Name',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 8),
+              TextFormField(
+                controller: _nameController,
+                decoration: InputDecoration(
+                  hintText: 'Enter plant name',
+                  filled: true,
+                  fillColor: AppColors.backgroundWhite,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: AppColors.primaryGreen),
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a plant name';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 24),
+              
+              // Choose Plant Icon
+              Text(              'Choose Plant Icon',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            SizedBox(height: 8),
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.backgroundWhite,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.border),
+              ),
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 8,
+                    childAspectRatio: 1,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                  ),
+                  itemCount: _plantEmojis.length,
+                  itemBuilder: (context, index) {
+                    final emoji = _plantEmojis[index];
+                    final isSelected = emoji == _selectedEmoji;
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedEmoji = emoji;
+                        });
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isSelected ? AppColors.primaryGreenAlpha10 : Colors.transparent,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: isSelected ? AppColors.primaryGreen : Colors.transparent,
+                            width: 2,
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            emoji,
+                            style: TextStyle(fontSize: 20),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              SizedBox(height: 24),
+              
+              // Plant Type
+              Text(
+                'Plant Type',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: _selectedPlantType,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: AppColors.backgroundWhite,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: AppColors.primaryGreen),
+                  ),
+                ),
+                items: _plantTypes.map((String type) {
+                  return DropdownMenuItem<String>(
+                    value: type,
+                    child: Text(type),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedPlantType = newValue!;
+                  });
+                },
+              ),
+              SizedBox(height: 24),
+              
+              // Location
+              Text(
+                'Location',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 8),
+              TextFormField(
+                controller: _locationController,
+                decoration: InputDecoration(
+                  hintText: 'e.g., Garden, Greenhouse, Living Room',
+                  filled: true,
+                  fillColor: AppColors.backgroundWhite,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: AppColors.primaryGreen),
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a location';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 24),
+              
+              // IoT Device
+              Text(
+                'IoT Device',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 8),
+              TextFormField(
+                controller: _deviceIdController,
+                decoration: InputDecoration(
+                  hintText: 'Enter device ID or scan QR code',
+                  filled: true,
+                  fillColor: AppColors.backgroundWhite,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: AppColors.primaryGreen),
+                  ),
+                  suffixIcon: IconButton(
+                    icon: Icon(Icons.qr_code_scanner, color: AppColors.textSecondary),
+                    onPressed: () {
+                      // QR code scanner
+                    },
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a device ID';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16),
+              // Access Token
+              Text(
+                'Access Token',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 8),
+              TextFormField(
+                controller: _accessTokenController,
+                decoration: InputDecoration(
+                  hintText: 'Enter access token',
+                  filled: true,
+                  fillColor: AppColors.backgroundWhite,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: AppColors.primaryGreen),
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter an access token';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 24),
+              
+              // Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        side: BorderSide(color: AppColors.border),
+                        foregroundColor: AppColors.textSecondary,
+                      ),
+                      child: Text('Cancel'),
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _addPlant,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryGreen,
+                        foregroundColor: AppColors.textLight,
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: _isLoading
+                          ? SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(AppColors.textLight),
+                              ),
+                            )
+                          : Text(
+                              'Add Plant',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  void _addPlant() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+      
+      try {
+        // Add plant using the service
+        final plant = await _plantService.addPlant(
+          nombre: _nameController.text,
+          deviceId: _deviceIdController.text,
+          emoji: _selectedEmoji,
+          descripcion: _descriptionController.text.isNotEmpty 
+              ? _descriptionController.text 
+              : _selectedPlantType,
+          ubicacion: _locationController.text.isNotEmpty 
+              ? _locationController.text 
+              : null,
+          accessToken: _accessTokenController.text,
+        );
+        
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('¡Planta agregada exitosamente!'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+          
+          // Navigate back with the new plant
+          Navigator.pop(context, plant);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error al agregar planta: $e'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+    }
+  }
+}

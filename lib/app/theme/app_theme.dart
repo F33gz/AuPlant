@@ -1,0 +1,255 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'app_colors.dart';
+import 'app_text_styles.dart';
+
+/// Application Theme Configuration
+/// 
+/// Centralized theme configuration for the AuPlant IoT application.
+/// Defines the Material Design theme with custom colors, typography,
+/// and component styles.
+class AppTheme {
+  // Private constructor to prevent instantiation
+  AppTheme._();
+
+  /// Light theme configuration
+  static ThemeData get lightTheme {
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: _lightColorScheme,
+      textTheme: _textTheme,
+      appBarTheme: _appBarTheme,
+      elevatedButtonTheme: _elevatedButtonTheme,
+      outlinedButtonTheme: _outlinedButtonTheme,
+      textButtonTheme: _textButtonTheme,
+      inputDecorationTheme: _inputDecorationTheme,
+      cardTheme: _cardTheme,
+      switchTheme: _switchTheme,
+      snackBarTheme: _snackBarTheme,
+      bottomNavigationBarTheme: _bottomNavigationBarTheme,
+      floatingActionButtonTheme: _floatingActionButtonTheme,
+      dividerTheme: _dividerTheme,
+      iconTheme: _iconTheme,
+      splashColor: AppColors.primaryGreenAlpha10,
+      highlightColor: AppColors.primaryGreenAlpha10,
+      scaffoldBackgroundColor: AppColors.backgroundLight,
+    );
+  }
+
+  /// Light color scheme
+  static ColorScheme get _lightColorScheme {
+    return ColorScheme.fromSeed(
+      seedColor: AppColors.primaryGreen,
+      brightness: Brightness.light,
+      primary: AppColors.primaryGreen,
+      secondary: AppColors.secondaryGreen,
+      surface: AppColors.backgroundWhite,
+      error: AppColors.error,
+      onPrimary: AppColors.textLight,
+      onSecondary: AppColors.textLight,
+      onSurface: AppColors.textPrimary,
+      onError: AppColors.textLight,
+    );
+  }
+
+  /// Text theme configuration
+  static TextTheme get _textTheme {
+    return TextTheme(
+      displayLarge: AppTextStyles.displayLarge,
+      displayMedium: AppTextStyles.displayMedium,
+      displaySmall: AppTextStyles.displaySmall,
+      headlineLarge: AppTextStyles.headlineLarge,
+      headlineMedium: AppTextStyles.headlineMedium,
+      headlineSmall: AppTextStyles.headlineSmall,
+      titleLarge: AppTextStyles.titleLarge,
+      titleMedium: AppTextStyles.titleMedium,
+      titleSmall: AppTextStyles.titleSmall,
+      bodyLarge: AppTextStyles.bodyLarge,
+      bodyMedium: AppTextStyles.bodyMedium,
+      bodySmall: AppTextStyles.bodySmall,
+      labelLarge: AppTextStyles.labelLarge,
+      labelMedium: AppTextStyles.labelMedium,
+      labelSmall: AppTextStyles.labelSmall,
+    );
+  }
+
+  /// App bar theme configuration
+  static AppBarTheme get _appBarTheme {
+    return AppBarTheme(
+      backgroundColor: AppColors.backgroundWhite,
+      foregroundColor: AppColors.textPrimary,
+      elevation: 2,
+      shadowColor: AppColors.shadowMedium,
+      centerTitle: false,
+      titleTextStyle: AppTextStyles.appBarTitle,
+      iconTheme: const IconThemeData(
+        color: AppColors.primaryGreen,
+        size: 24,
+      ),
+      systemOverlayStyle: SystemUiOverlayStyle.dark,
+    );
+  }
+
+  /// Elevated button theme configuration
+  static ElevatedButtonThemeData get _elevatedButtonTheme {
+    return ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primaryGreen,
+        foregroundColor: AppColors.textLight,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        textStyle: AppTextStyles.buttonMedium,
+      ),
+    );
+  }
+
+  /// Outlined button theme configuration
+  static OutlinedButtonThemeData get _outlinedButtonTheme {
+    return OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.primaryGreen,
+        side: const BorderSide(color: AppColors.primaryGreen, width: 1),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        textStyle: AppTextStyles.buttonMedium,
+      ),
+    );
+  }
+
+  /// Text button theme configuration
+  static TextButtonThemeData get _textButtonTheme {
+    return TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: AppColors.primaryGreen,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        textStyle: AppTextStyles.buttonMedium,
+      ),
+    );
+  }
+
+  /// Input decoration theme configuration
+  static InputDecorationTheme get _inputDecorationTheme {
+    return InputDecorationTheme(
+      filled: true,
+      fillColor: AppColors.backgroundWhite,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.error),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.error, width: 2),
+      ),
+      labelStyle: AppTextStyles.formLabel,
+      hintStyle: AppTextStyles.formHelper,
+      errorStyle: AppTextStyles.formError,
+      contentPadding: const EdgeInsets.all(16),
+    );
+  }
+
+  /// Card theme configuration
+  static CardThemeData get _cardTheme {
+    return CardThemeData(
+      color: AppColors.backgroundWhite,
+      shadowColor: AppColors.shadowLight,
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+    );
+  }
+
+  /// Switch theme configuration
+  static SwitchThemeData get _switchTheme {
+    return SwitchThemeData(
+      thumbColor: WidgetStateProperty.resolveWith<Color>((states) {
+        if (states.contains(WidgetState.selected)) {
+          return AppColors.backgroundWhite;
+        }
+        return AppColors.disabled;
+      }),
+      trackColor: WidgetStateProperty.resolveWith<Color>((states) {
+        if (states.contains(WidgetState.selected)) {
+          return AppColors.primaryGreen;
+        }
+        return AppColors.border;
+      }),
+    );
+  }
+
+  /// Snack bar theme configuration
+  static SnackBarThemeData get _snackBarTheme {
+    return SnackBarThemeData(
+      backgroundColor: AppColors.primaryGreen,
+      contentTextStyle: AppTextStyles.bodyMedium.copyWith(
+        color: AppColors.textLight,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+      behavior: SnackBarBehavior.floating,
+    );
+  }
+
+  /// Bottom navigation bar theme configuration
+  static BottomNavigationBarThemeData get _bottomNavigationBarTheme {
+    return BottomNavigationBarThemeData(
+      backgroundColor: AppColors.backgroundWhite,
+      selectedItemColor: AppColors.primaryGreen,
+      unselectedItemColor: AppColors.textSecondary,
+      selectedLabelStyle: AppTextStyles.navigationLabelSelected,
+      unselectedLabelStyle: AppTextStyles.navigationLabel,
+      type: BottomNavigationBarType.fixed,
+      elevation: 8,
+    );
+  }
+
+  /// Floating action button theme configuration
+  static FloatingActionButtonThemeData get _floatingActionButtonTheme {
+    return FloatingActionButtonThemeData(
+      backgroundColor: AppColors.primaryGreen,
+      foregroundColor: AppColors.textLight,
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+    );
+  }
+
+  /// Divider theme configuration
+  static DividerThemeData get _dividerTheme {
+    return const DividerThemeData(
+      color: AppColors.divider,
+      thickness: 1,
+      space: 1,
+    );
+  }
+
+  /// Icon theme configuration
+  static IconThemeData get _iconTheme {
+    return const IconThemeData(
+      color: AppColors.primaryGreen,
+      size: 24,
+    );
+  }
+}
