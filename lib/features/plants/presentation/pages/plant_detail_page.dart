@@ -8,6 +8,8 @@ import '../widgets/real_time_data_section.dart';
 import '../widgets/sensor_evolution_section.dart';
 import '../widgets/plant_controls_section.dart';
 import 'plant_settings_page.dart'; // Added import for PlantSettingsPage
+import '../../../../core/models/user_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Plant detail page showing comprehensive information about a specific plant
 /// including real-time sensor data, historical trends, and control options.
@@ -28,11 +30,13 @@ class _PlantDetailPageState extends State<PlantDetailPage> {
   PlantWithSensorData? _plantWithSensorData;
   bool _isLoading = true;
   String? _error;
+  bool? _isSubscribed;
 
   @override
   void initState() {
     super.initState();
     _loadPlantData();
+    _fetchSubscription();
   }
 
   Future<void> _loadPlantData() async {
@@ -66,6 +70,32 @@ class _PlantDetailPageState extends State<PlantDetailPage> {
       });
     }
   }
+
+  Future<void> _fetchSubscription() async {
+    final supabase = Supabase.instance.client;
+    final user = supabase.auth.currentUser;
+    if (user == null) {
+      setState(() { _isSubscribed = false; });
+      return;
+    }
+    final data = await supabase
+        .from('users')
+        .select('subscribed')
+        .eq('id', user.id)
+        .single();
+    setState(() {
+      _isSubscribed = data['subscribed'] ?? false;
+    });
+  }
+
+  Future<void> _subscribeUser() async {
+    final supabase = Supabase.instance.client;
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
+    await supabase.from('users').update({'subscribed': true}).eq('id', user.id);
+    setState(() { _isSubscribed = true; });
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -241,12 +271,65 @@ class _PlantDetailPageState extends State<PlantDetailPage> {
                   const SizedBox(height: UIConstants.spacingXXL),
                   
                   // Historical data section
-                  _buildSectionTitle('Evolución de Sensores'),
-                  const SizedBox(height: UIConstants.spacingL),
-                  SensorEvolutionSection(
-                    humidityData: plantData.recentHumidityReadings,
-                    lightData: plantData.recentLightReadings,
-                  ),
+                  if (_isSubscribed == null)
+                    const Center(child: CircularProgressIndicator()),
+                  if (_isSubscribed == false)
+                    Container(
+                      margin: const EdgeInsets.symmetric(vertical: 24),
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryGreen.withOpacity(0.07),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColors.primaryGreen.withOpacity(0.15)),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(Icons.lock_outline, size: 48, color: AppColors.primaryGreen),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Estadísticas premium',
+                            style: AppTextStyles.titleMedium.copyWith(
+                              color: AppColors.primaryGreen,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            'Para ver la evolución de sensores necesitas una suscripción activa.',
+                            style: AppTextStyles.bodyLarge.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 22),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: _subscribeUser,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryGreen,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text('Suscribirse', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (_isSubscribed == true) ...[
+                    _buildSectionTitle('Evolución de Sensores'),
+                    const SizedBox(height: UIConstants.spacingL),
+                    SensorEvolutionSection(
+                      humidityData: plantData.recentHumidityReadings,
+                      lightData: plantData.recentLightReadings,
+                    ),
+                  ],
                   
                   const SizedBox(height: UIConstants.spacingXXL),
                   

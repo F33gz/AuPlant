@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../../core/models/plant_model.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/services/plant_service.dart';
+import '../../../../core/models/user_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PlantSettingsPage extends StatefulWidget {
   final PlantModel plant;
@@ -28,6 +30,7 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
   
   bool _isLoading = false;
   bool _hasUnsavedChanges = false;
+  bool? _isSubscribed;
 
   final List<String> _plantEmojis = [
     '🌱', '🌿', '🌾', '🌵', '🌳', '🌲', '🌴', 
@@ -41,6 +44,7 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
     super.initState();
     _initializeControllers();
     _initializeValues();
+    _fetchSubscription();
   }
 
   void _initializeControllers() {
@@ -59,6 +63,31 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
     
     _isAutoMode = widget.plant.isAutoMode;
     _selectedEmoji = widget.plant.emoji;
+  }
+
+  Future<void> _fetchSubscription() async {
+    final supabase = Supabase.instance.client;
+    final user = supabase.auth.currentUser;
+    if (user == null) {
+      setState(() { _isSubscribed = false; });
+      return;
+    }
+    final data = await supabase
+        .from('users')
+        .select('subscribed')
+        .eq('id', user.id)
+        .single();
+    setState(() {
+      _isSubscribed = data['subscribed'] ?? false;
+    });
+  }
+
+  Future<void> _subscribeUser() async {
+    final supabase = Supabase.instance.client;
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
+    await supabase.from('users').update({'subscribed': true}).eq('id', user.id);
+    setState(() { _isSubscribed = true; });
   }
 
   @override
@@ -82,7 +111,7 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Plant Settings',
+          'Configuración de Planta',
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 20,
@@ -100,7 +129,7 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : Text(
-                    'Save',
+                    'Guardar',
                     style: TextStyle(
                       color: AppColors.primaryGreen,
                       fontWeight: FontWeight.w600,
@@ -155,7 +184,7 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Basic Information',
+            'Información básica',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -163,35 +192,34 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
             ),
           ),
           SizedBox(height: 16),
-          
-          // Plant Name
+          // Nombre de la planta
           Text(
-            'Plant Name',
+            'Nombre de la planta',
             style: TextStyle(
               fontSize: 14,
               color: AppColors.textSecondary,
             ),
           ),
-            SizedBox(height: 4),
-            TextFormField(
-              controller: _nameController,
-              decoration: InputDecoration(
-                hintText: 'Enter plant name',
-                filled: true,
-                fillColor: AppColors.backgroundLight,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: AppColors.border),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: AppColors.border),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: AppColors.primaryGreen),
-                ),
+          SizedBox(height: 4),
+          TextFormField(
+            controller: _nameController,
+            decoration: InputDecoration(
+              hintText: 'Ingresa el nombre de la planta',
+              filled: true,
+              fillColor: AppColors.backgroundLight,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: AppColors.border),
               ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: AppColors.border),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: AppColors.primaryGreen),
+              ),
+            ),
             onChanged: (value) {
               setState(() {
                 _hasUnsavedChanges = true;
@@ -199,12 +227,9 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
             },
           ),
           SizedBox(height: 16),
-          
-          // ...existing code...
-          
-          // Location
+          // Ubicación
           Text(
-            'Location',
+            'Ubicación',
             style: TextStyle(
               fontSize: 14,
               color: AppColors.textSecondary,
@@ -214,7 +239,7 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
           TextFormField(
             controller: _locationController,
             decoration: InputDecoration(
-              hintText: 'Enter location',
+              hintText: 'Ingresa la ubicación',
               filled: true,
               fillColor: AppColors.backgroundLight,
               border: OutlineInputBorder(
@@ -253,7 +278,7 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Plant Icon',
+            'Icono de la planta',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -313,7 +338,7 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Sensor Thresholds',
+            'Umbrales de sensores',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -322,56 +347,109 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
           ),
           SizedBox(height: 4),
           Text(
-            'Set the minimum humidity for your plant',
+            'Configura la humedad mínima para tu planta',
             style: TextStyle(
               fontSize: 12,
               color: AppColors.textSecondary,
             ),
           ),
           SizedBox(height: 24),
-          // Humidity Slider SOLO MINIMO
-          Container(
-            padding: EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.primaryGreenAlpha10,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.opacity, color: AppColors.humidity, size: 16),
-                    SizedBox(width: 8),
-                    Text(
-                      'Min Humidity (%)',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
+          if (_isSubscribed == null)
+            const Center(child: CircularProgressIndicator()),
+          if (_isSubscribed == false)
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: AppColors.primaryGreen.withOpacity(0.07),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.primaryGreen.withOpacity(0.15)),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Icon(Icons.lock_outline, size: 40, color: AppColors.primaryGreen),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Función premium',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primaryGreen,
                     ),
-                  ],
-                ),
-                SizedBox(height: 8),
-                Text('Min: ${_minHumidity.toInt()}', style: TextStyle(fontSize: 12)),
-                Slider(
-                  value: _minHumidity,
-                  min: 0,
-                  max: 100,
-                  divisions: 20,
-                  activeColor: AppColors.primaryGreen,
-                  inactiveColor: Colors.grey[300],
-                  onChanged: (double value) {
-                    setState(() {
-                      _minHumidity = value;
-                      _hasUnsavedChanges = true;
-                    });
-                  },
-                ),
-              ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Para cambiar el umbral de humedad necesitas una suscripción activa.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textSecondary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _subscribeUser,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryGreen,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text('Suscribirse', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
+          if (_isSubscribed == true)
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primaryGreenAlpha10,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.opacity, color: AppColors.humidity, size: 16),
+                      SizedBox(width: 8),
+                      Text(
+                        'Humedad mínima (%)',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Text('Min: ${_minHumidity.toInt()}', style: TextStyle(fontSize: 12)),
+                  Slider(
+                    value: _minHumidity,
+                    min: 0,
+                    max: 100,
+                    divisions: 20,
+                    activeColor: AppColors.primaryGreen,
+                    inactiveColor: Colors.grey[300],
+                    onChanged: (double value) {
+                      setState(() {
+                        _minHumidity = value;
+                        _hasUnsavedChanges = true;
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ),
           SizedBox(height: 16),
         ],
       ),
@@ -390,7 +468,7 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Automation',
+            'Automatización',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -399,33 +477,32 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
           ),
           SizedBox(height: 16),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Auto Mode',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textPrimary,
-                      ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Modo automático',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
                     ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Automatically water based on sensor readings',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Riego automático según los sensores',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
               Switch(
                 value: _isAutoMode,
-                onChanged: (bool value) {
+                onChanged: (value) {
                   setState(() {
                     _isAutoMode = value;
                     _hasUnsavedChanges = true;
@@ -452,7 +529,7 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Device Management',
+            'Gestión del dispositivo',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -460,51 +537,54 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
             ),
           ),
           SizedBox(height: 16),
-          
-          // Device ID
           Text(
-            'Device ID',
+            'ID del dispositivo',
             style: TextStyle(
               fontSize: 14,
               color: AppColors.textSecondary,
             ),
           ),
           SizedBox(height: 4),
-          TextFormField(
-            controller: _deviceIdController,
-            decoration: InputDecoration(
-              hintText: 'Enter device ID',
-              filled: true,
-              fillColor: AppColors.backgroundLight,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: AppColors.border),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _deviceIdController,
+                  decoration: InputDecoration(
+                    hintText: 'Ingresa el ID del dispositivo',
+                    filled: true,
+                    fillColor: AppColors.backgroundLight,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: AppColors.primaryGreen),
+                    ),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _hasUnsavedChanges = true;
+                    });
+                  },
+                ),
               ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: AppColors.border),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: AppColors.primaryGreen),
-              ),
-              suffixIcon: IconButton(
-                icon: Icon(Icons.qr_code_scanner),
+              IconButton(
+                icon: Icon(Icons.qr_code, color: AppColors.primaryGreen),
                 onPressed: () {
-                  // QR code scanner
+                  // TODO: Implementar escaneo de QR
                 },
               ),
-            ),
-            onChanged: (value) {
-              setState(() {
-                _hasUnsavedChanges = true;
-              });
-            },
+            ],
           ),
           SizedBox(height: 16),
-          // Access Token
           Text(
-            'Access Token',
+            'Token de acceso',
             style: TextStyle(
               fontSize: 14,
               color: AppColors.textSecondary,
@@ -514,7 +594,7 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
           TextFormField(
             controller: _accessTokenController,
             decoration: InputDecoration(
-              hintText: 'Enter access token',
+              hintText: 'Ingresa el token de acceso',
               filled: true,
               fillColor: AppColors.backgroundLight,
               border: OutlineInputBorder(
@@ -537,18 +617,19 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
             },
           ),
           SizedBox(height: 16),
-          
-          // Online Status
           Row(
             children: [
-              Icon(Icons.wifi, color: AppColors.primaryGreen, size: 16),
+              Icon(
+                Icons.wifi,
+                color: AppColors.primaryGreen,
+                size: 18,
+              ),
               SizedBox(width: 8),
               Text(
-                'Online',
+                'En línea',
                 style: TextStyle(
-                  fontSize: 14,
                   color: AppColors.primaryGreen,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -562,36 +643,32 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.red[50],
+        color: AppColors.error.withOpacity(0.08),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.red[200]!),
+        border: Border.all(color: AppColors.error.withOpacity(0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Danger Zone',
+            'Zona peligrosa',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: Colors.red[800],
+              color: AppColors.error,
             ),
           ),
           SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () {
-                _showDeleteConfirmationDialog();
-              },
-              icon: Icon(Icons.delete, color: AppColors.error),
-              label: Text(
-                'Delete Plant',
-                style: TextStyle(color: AppColors.error),
-              ),
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: AppColors.error),
-                padding: EdgeInsets.symmetric(vertical: 12),
+            child: ElevatedButton.icon(
+              onPressed: _isLoading ? null : _deletePlant,
+              icon: Icon(Icons.delete, color: Colors.white),
+              label: Text('Eliminar planta'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -645,6 +722,41 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
         );
       },
     );
+  }
+
+  Future<void> _deletePlant() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar planta'),
+        content: const Text('¿Estás seguro de que deseas eliminar esta planta? Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    setState(() => _isLoading = true);
+    try {
+      await _plantService.deletePlant(widget.plant.id);
+      if (mounted) {
+        Navigator.of(context).pop('deleted');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al eliminar la planta: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   void _saveChanges() async {

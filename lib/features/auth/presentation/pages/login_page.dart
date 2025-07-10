@@ -49,8 +49,8 @@ class _LoginPageState extends State<LoginPage> {
               _buildLogoHeader(),
               const SizedBox(height: UIConstants.spacingXXL),
               _buildLoginForm(),
-              const SizedBox(height: UIConstants.spacingL),
-              _buildGoogleButton(),
+              // const SizedBox(height: UIConstants.spacingL),
+              // _buildGoogleButton(), // ELIMINADO
               const SizedBox(height: UIConstants.spacingXXL),
               _buildForgotPassword(),
               const SizedBox(height: UIConstants.spacingXXL),
@@ -92,7 +92,7 @@ class _LoginPageState extends State<LoginPage> {
         ),
         const SizedBox(height: UIConstants.spacingS),
         Text(
-          'Smart Plant Care at Your Fingertips',
+          'Cuida tus plantas de forma inteligente',
           style: AppTextStyles.bodyMedium.copyWith(
             color: AppColors.textSecondary,
           ),
@@ -113,7 +113,7 @@ class _LoginPageState extends State<LoginPage> {
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
             decoration: InputDecoration(
-              labelText: 'Email',
+              labelText: 'Correo electrónico',
               prefixIcon: const Icon(Icons.email_outlined),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(UIConstants.radiusM),
@@ -123,10 +123,10 @@ class _LoginPageState extends State<LoginPage> {
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please enter your email';
+                return 'Por favor ingresa tu correo electrónico';
               }
               if (!value.contains('@') || !value.contains('.')) {
-                return 'Please enter a valid email';
+                return 'Por favor ingresa un correo válido';
               }
               return null;
             },
@@ -138,7 +138,7 @@ class _LoginPageState extends State<LoginPage> {
             controller: _passwordController,
             obscureText: _obscurePassword,
             decoration: InputDecoration(
-              labelText: 'Password',
+              labelText: 'Contraseña',
               prefixIcon: const Icon(Icons.lock_outlined),
               suffixIcon: IconButton(
                 icon: Icon(
@@ -160,10 +160,10 @@ class _LoginPageState extends State<LoginPage> {
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please enter your password';
+                return 'Por favor ingresa tu contraseña';
               }
               if (value.length < 6) {
-                return 'Password must be at least 6 characters';
+                return 'La contraseña debe tener al menos 6 caracteres';
               }
               return null;
             },
@@ -183,7 +183,7 @@ class _LoginPageState extends State<LoginPage> {
                 activeColor: AppColors.primaryGreen,
               ),
               Text(
-                'Remember me',
+                'Recuérdame',
                 style: AppTextStyles.bodyMedium,
               ),
             ],
@@ -212,7 +212,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     )
                   : Text(
-                      'Login',
+                      'Iniciar sesión',
                       style: AppTextStyles.bodyLarge.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
@@ -231,12 +231,12 @@ class _LoginPageState extends State<LoginPage> {
         // Handle forgot password
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Forgot password functionality not implemented yet'),
+            content: Text('La funcionalidad de recuperar contraseña aún no está implementada'),
           ),
         );
       },
       child: Text(
-        'Forgot Password?',
+        '¿Olvidaste tu contraseña?',
         style: AppTextStyles.bodyMedium.copyWith(
           color: AppColors.primaryGreen,
         ),
@@ -249,7 +249,7 @@ class _LoginPageState extends State<LoginPage> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          'Don\'t have an account? ',
+          '¿No tienes una cuenta? ',
           style: AppTextStyles.bodyMedium,
         ),
         TextButton(
@@ -257,7 +257,7 @@ class _LoginPageState extends State<LoginPage> {
             Navigator.pushNamed(context, AppRoutes.signup);
           },
           child: Text(
-            'Sign Up',
+            'Regístrate',
             style: AppTextStyles.bodyMedium.copyWith(
               color: AppColors.primaryGreen,
               fontWeight: FontWeight.w600,
@@ -278,7 +278,7 @@ class _LoginPageState extends State<LoginPage> {
       );
       if (res.session != null) {
         if (mounted) {
-          Navigator.pushReplacementNamed(context, AppRoutes.plantsOverview);
+          Navigator.pushReplacementNamed(context, '/');
         }
       } else {
         throw res.user == null ? 'No user found' : 'Unknown error';

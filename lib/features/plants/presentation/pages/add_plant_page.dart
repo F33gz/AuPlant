@@ -61,7 +61,7 @@ class _AddPlantPageState extends State<AddPlantPage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Add New Plant',
+          'Agregar Nueva Planta',
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 20,
@@ -78,7 +78,7 @@ class _AddPlantPageState extends State<AddPlantPage> {
             children: [
               // Plant Name
               Text(
-                'Plant Name',
+                'Nombre de la planta',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -89,7 +89,7 @@ class _AddPlantPageState extends State<AddPlantPage> {
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(
-                  hintText: 'Enter plant name',
+                  hintText: 'Ingresa el nombre de la planta',
                   filled: true,
                   fillColor: AppColors.backgroundWhite,
                   border: OutlineInputBorder(
@@ -107,7 +107,7 @@ class _AddPlantPageState extends State<AddPlantPage> {
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a plant name';
+                    return 'Por favor ingresa el nombre de la planta';
                   }
                   return null;
                 },
@@ -115,21 +115,22 @@ class _AddPlantPageState extends State<AddPlantPage> {
               SizedBox(height: 24),
               
               // Choose Plant Icon
-              Text(              'Choose Plant Icon',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+              Text(
+                'Elige el icono de la planta',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
               ),
-            ),
-            SizedBox(height: 8),
-            Container(
-              padding: EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.backgroundWhite,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.border),
-              ),
+              SizedBox(height: 8),
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.backgroundWhite,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.border),
+                ),
                 child: GridView.builder(
                   shrinkWrap: true,
                   physics: NeverScrollableScrollPhysics(),
@@ -173,7 +174,7 @@ class _AddPlantPageState extends State<AddPlantPage> {
               
               // Plant Type
               Text(
-                'Plant Type',
+                'Tipo de planta',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -215,7 +216,7 @@ class _AddPlantPageState extends State<AddPlantPage> {
               
               // Location
               Text(
-                'Location',
+                'Ubicación',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -226,7 +227,7 @@ class _AddPlantPageState extends State<AddPlantPage> {
               TextFormField(
                 controller: _locationController,
                 decoration: InputDecoration(
-                  hintText: 'e.g., Garden, Greenhouse, Living Room',
+                  hintText: 'e.g., Jardín, Invernadero, Sala de estar',
                   filled: true,
                   fillColor: AppColors.backgroundWhite,
                   border: OutlineInputBorder(
@@ -244,7 +245,7 @@ class _AddPlantPageState extends State<AddPlantPage> {
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a location';
+                    return 'Por favor ingresa una ubicación';
                   }
                   return null;
                 },
@@ -253,7 +254,7 @@ class _AddPlantPageState extends State<AddPlantPage> {
               
               // IoT Device
               Text(
-                'IoT Device',
+                'Dispositivo IoT',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -264,7 +265,7 @@ class _AddPlantPageState extends State<AddPlantPage> {
               TextFormField(
                 controller: _deviceIdController,
                 decoration: InputDecoration(
-                  hintText: 'Enter device ID or scan QR code',
+                  hintText: 'Ingresa el ID del dispositivo o escanea el código QR',
                   filled: true,
                   fillColor: AppColors.backgroundWhite,
                   border: OutlineInputBorder(
@@ -288,7 +289,7 @@ class _AddPlantPageState extends State<AddPlantPage> {
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a device ID';
+                    return 'Por favor ingresa el ID del dispositivo';
                   }
                   return null;
                 },
@@ -296,7 +297,7 @@ class _AddPlantPageState extends State<AddPlantPage> {
               SizedBox(height: 16),
               // Access Token
               Text(
-                'Access Token',
+                'Token de acceso',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -307,7 +308,7 @@ class _AddPlantPageState extends State<AddPlantPage> {
               TextFormField(
                 controller: _accessTokenController,
                 decoration: InputDecoration(
-                  hintText: 'Enter access token',
+                  hintText: 'Ingresa el token de acceso',
                   filled: true,
                   fillColor: AppColors.backgroundWhite,
                   border: OutlineInputBorder(
@@ -325,7 +326,7 @@ class _AddPlantPageState extends State<AddPlantPage> {
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter an access token';
+                    return 'Por favor ingresa un token de acceso';
                   }
                   return null;
                 },
@@ -346,7 +347,7 @@ class _AddPlantPageState extends State<AddPlantPage> {
                         side: BorderSide(color: AppColors.border),
                         foregroundColor: AppColors.textSecondary,
                       ),
-                      child: Text('Cancel'),
+                      child: Text('Cancelar'),
                     ),
                   ),
                   SizedBox(width: 16),
@@ -371,7 +372,7 @@ class _AddPlantPageState extends State<AddPlantPage> {
                               ),
                             )
                           : Text(
-                              'Add Plant',
+                              'Agregar Planta',
                               style: TextStyle(fontWeight: FontWeight.w600),
                             ),
                     ),

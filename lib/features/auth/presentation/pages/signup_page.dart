@@ -70,16 +70,15 @@ class _SignupPageState extends State<SignupPage> {
     return Column(
       children: [
         Text(
-          'Create Account',
+          'Crear cuenta',
           style: AppTextStyles.headlineLarge.copyWith(
             color: AppColors.primaryGreen,
             fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(height: UIConstants.spacingS),
-        
         Text(
-          'Join AuPlant and start caring for your plants smartly',
+          'Únete a AuPlant y comienza a cuidar tus plantas de forma inteligente',
           style: AppTextStyles.bodyMedium.copyWith(
             color: AppColors.textSecondary,
           ),
@@ -99,7 +98,7 @@ class _SignupPageState extends State<SignupPage> {
             controller: _nameController,
             keyboardType: TextInputType.name,
             decoration: InputDecoration(
-              labelText: 'Full Name',
+              labelText: 'Nombre completo',
               prefixIcon: const Icon(Icons.person_outlined),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(UIConstants.radiusM),
@@ -109,10 +108,10 @@ class _SignupPageState extends State<SignupPage> {
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please enter your full name';
+                return 'Por favor ingresa tu nombre completo';
               }
               if (value.length < 2) {
-                return 'Name must be at least 2 characters';
+                return 'El nombre debe tener al menos 2 caracteres';
               }
               return null;
             },
@@ -124,7 +123,7 @@ class _SignupPageState extends State<SignupPage> {
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
             decoration: InputDecoration(
-              labelText: 'Email',
+              labelText: 'Correo electrónico',
               prefixIcon: const Icon(Icons.email_outlined),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(UIConstants.radiusM),
@@ -134,10 +133,10 @@ class _SignupPageState extends State<SignupPage> {
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please enter your email';
+                return 'Por favor ingresa tu correo electrónico';
               }
               if (!value.contains('@') || !value.contains('.')) {
-                return 'Please enter a valid email';
+                return 'Por favor ingresa un correo válido';
               }
               return null;
             },
@@ -149,7 +148,7 @@ class _SignupPageState extends State<SignupPage> {
             controller: _passwordController,
             obscureText: _obscurePassword,
             decoration: InputDecoration(
-              labelText: 'Password',
+              labelText: 'Contraseña',
               prefixIcon: const Icon(Icons.lock_outlined),
               suffixIcon: IconButton(
                 icon: Icon(
@@ -171,10 +170,10 @@ class _SignupPageState extends State<SignupPage> {
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please enter your password';
+                return 'Por favor ingresa tu contraseña';
               }
               if (value.length < 6) {
-                return 'Password must be at least 6 characters';
+                return 'La contraseña debe tener al menos 6 caracteres';
               }
               return null;
             },
@@ -186,7 +185,7 @@ class _SignupPageState extends State<SignupPage> {
             controller: _confirmPasswordController,
             obscureText: _obscureConfirmPassword,
             decoration: InputDecoration(
-              labelText: 'Confirm Password',
+              labelText: 'Confirmar contraseña',
               prefixIcon: const Icon(Icons.lock_outlined),
               suffixIcon: IconButton(
                 icon: Icon(
@@ -208,19 +207,18 @@ class _SignupPageState extends State<SignupPage> {
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please confirm your password';
+                return 'Por favor confirma tu contraseña';
               }
               if (value != _passwordController.text) {
-                return 'Passwords do not match';
+                return 'Las contraseñas no coinciden';
               }
               return null;
             },
           ),
           const SizedBox(height: UIConstants.spacingL),
           
-          // Terms and conditions checkbox
+          // Terms and Privacy
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Checkbox(
                 value: _agreeToTerms,
@@ -232,40 +230,33 @@ class _SignupPageState extends State<SignupPage> {
                 activeColor: AppColors.primaryGreen,
               ),
               Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _agreeToTerms = !_agreeToTerms;
-                    });
-                  },
-                  child: Text.rich(
-                    TextSpan(
-                      text: 'I agree to the ',
-                      style: AppTextStyles.bodySmall,
-                      children: [
-                        TextSpan(
-                          text: 'Terms of Service',
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.primaryGreen,
-                            decoration: TextDecoration.underline,
-                          ),
+                child: Text.rich(
+                  TextSpan(
+                    text: 'Acepto los ',
+                    style: AppTextStyles.bodySmall,
+                    children: [
+                      TextSpan(
+                        text: 'Términos de servicio',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.primaryGreen,
+                          decoration: TextDecoration.underline,
                         ),
-                        const TextSpan(text: ' and '),
-                        TextSpan(
-                          text: 'Privacy Policy',
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.primaryGreen,
-                            decoration: TextDecoration.underline,
-                          ),
+                      ),
+                      TextSpan(text: ' y la '),
+                      TextSpan(
+                        text: 'Política de privacidad',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.primaryGreen,
+                          decoration: TextDecoration.underline,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: UIConstants.spacingXXL),
+          const SizedBox(height: UIConstants.spacingL),
           
           // Signup button
           SizedBox(
@@ -289,7 +280,7 @@ class _SignupPageState extends State<SignupPage> {
                       ),
                     )
                   : Text(
-                      'Create Account',
+                      'Crear cuenta',
                       style: AppTextStyles.bodyLarge.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
@@ -307,15 +298,15 @@ class _SignupPageState extends State<SignupPage> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          'Already have an account? ',
+          '¿Ya tienes una cuenta? ',
           style: AppTextStyles.bodyMedium,
         ),
         TextButton(
           onPressed: () {
-            Navigator.pop(context);
+            Navigator.pushNamed(context, AppRoutes.login);
           },
           child: Text(
-            'Login',
+            'Inicia sesión',
             style: AppTextStyles.bodyMedium.copyWith(
               color: AppColors.primaryGreen,
               fontWeight: FontWeight.w600,
