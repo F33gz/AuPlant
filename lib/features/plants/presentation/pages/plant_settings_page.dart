@@ -789,11 +789,11 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
       // Refrescar el modelo de la planta desde la base de datos
       final refreshed = await _plantService.getUserPlants();
       final updatedPlant = refreshed.firstWhere((p) => p.id == widget.plant.id, orElse: () => widget.plant);
-      // En vez de modificar widget.plant, navega hacia atrás pasando el modelo actualizado
-      Navigator.of(context).pop(updatedPlant);
+      // Navegar a la MainPage y limpiar el stack
+      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Plant settings saved successfully!'),
+          content: Text('¡Configuración de la planta guardada exitosamente!'),
           backgroundColor: AppColors.success,
         ),
       );

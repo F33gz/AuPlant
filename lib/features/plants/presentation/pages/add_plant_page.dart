@@ -415,9 +415,8 @@ class _AddPlantPageState extends State<AddPlantPage> {
               backgroundColor: AppColors.success,
             ),
           );
-          
-          // Navigate back with the new plant
-          Navigator.pop(context, plant);
+          // Navegar a la MainPage y limpiar el stack
+          Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
         }
       } catch (e) {
         if (mounted) {
