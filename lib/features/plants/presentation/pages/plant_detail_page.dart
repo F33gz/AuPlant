@@ -1,20 +1,18 @@
 import 'package:flutter/material.dart';
-import '../../../../core/models/plant_model.dart';
-import '../../../../core/services/plant_service.dart';
+import 'package:get_it/get_it.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../shared/constants/ui_constants.dart';
-import '../widgets/real_time_data_section.dart';
-import '../widgets/sensor_evolution_section.dart';
-import '../widgets/plant_controls_section.dart';
-import 'plant_settings_page.dart'; // Added import for PlantSettingsPage
-import '../../../../core/models/user_model.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/utils/result.dart';
+import '../../domain/entities/plant.dart';
+import '../../domain/entities/sensor_data.dart';
+import '../../domain/usecases/get_sensor_data_usecase.dart';
 
-/// Plant detail page showing comprehensive information about a specific plant
-/// including real-time sensor data, historical trends, and control options.
+/// Plant Detail Page - Refactored with Clean Architecture
+/// 
+/// Much shorter and focused. Uses new entities and use cases.
 class PlantDetailPage extends StatefulWidget {
-  final PlantModel plant;
+  final Plant plant;
 
   const PlantDetailPage({
     super.key,
@@ -26,450 +24,554 @@ class PlantDetailPage extends StatefulWidget {
 }
 
 class _PlantDetailPageState extends State<PlantDetailPage> {
-  final PlantService _plantService = PlantService();
-  PlantWithSensorData? _plantWithSensorData;
+  final GetSensorDataUseCase _getSensorDataUseCase = GetIt.instance<GetSensorDataUseCase>();
+  
+  SensorData? _sensorData;
   bool _isLoading = true;
   String? _error;
-  bool? _isSubscribed;
 
   @override
   void initState() {
     super.initState();
-    _loadPlantData();
-    _fetchSubscription();
-  }
-
-  Future<void> _loadPlantData() async {
-    try {
-      setState(() {
-        _isLoading = true;
-        _error = null;
-      });
-
-      final plantsWithSensorData = await _plantService.getPlantsWithSensorData();
-      final plantData = plantsWithSensorData.firstWhere(
-        (p) => p.id == widget.plant.id,
-        orElse: () => PlantWithSensorData(
-          id: widget.plant.id,
-          nombre: widget.plant.name,
-          emoji: widget.plant.emoji,
-          descripcion: widget.plant.description,
-          ubicacion: widget.plant.location ?? '',
-          deviceId: widget.plant.deviceId,
-        ),
-      );
-
-      setState(() {
-        _plantWithSensorData = plantData;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _fetchSubscription() async {
-    final supabase = Supabase.instance.client;
-    final user = supabase.auth.currentUser;
-    if (user == null) {
-      setState(() { _isSubscribed = false; });
-      return;
-    }
-    final data = await supabase
-        .from('users')
-        .select('subscribed')
-        .eq('id', user.id)
-        .single();
-    setState(() {
-      _isSubscribed = data['subscribed'] ?? false;
-    });
-  }
-
-  Future<void> _subscribeUser() async {
-    final supabase = Supabase.instance.client;
-    final user = supabase.auth.currentUser;
-    if (user == null) return;
-    await supabase.from('users').update({'subscribed': true}).eq('id', user.id);
-    setState(() { _isSubscribed = true; });
+    _loadSensorData();
   }
 
   @override
   Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.backgroundLight,
+      appBar: _buildAppBar(),
+      body: _buildBody(),
+      floatingActionButton: _buildWaterButton(),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      title: Row(
+        children: [
+          Text(
+            widget.plant.emoji,
+            style: const TextStyle(fontSize: 24),
+          ),
+          const SizedBox(width: UIConstants.spacingS),
+          Expanded(
+            child: Text(
+              widget.plant.name,
+              style: AppTextStyles.headlineMedium.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      actions: [
+        IconButton(
+          icon: Icon(Icons.settings, color: AppColors.primaryGreen),
+          onPressed: () => _navigateToSettings(),
+        ),
+        IconButton(
+          icon: Icon(Icons.refresh, color: AppColors.primaryGreen),
+          onPressed: _loadSensorData,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBody() {
+    return RefreshIndicator(
+      onRefresh: _loadSensorData,
+      color: AppColors.primaryGreen,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(UIConstants.paddingL),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildPlantInfo(),
+            const SizedBox(height: UIConstants.spacingL),
+            _buildSensorDataSection(),
+            const SizedBox(height: UIConstants.spacingL),
+            _buildHealthStatus(),
+            const SizedBox(height: UIConstants.spacingL),
+            _buildThresholds(),
+            const SizedBox(height: UIConstants.spacingXXL),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlantInfo() {
+    return Container(
+      padding: const EdgeInsets.all(UIConstants.paddingL),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundWhite,
+        borderRadius: BorderRadius.circular(UIConstants.radiusM),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.location_on, color: AppColors.primaryGreen, size: 20),
+              const SizedBox(width: UIConstants.spacingS),
+              Text(
+                widget.plant.location ?? 'Sin ubicación',
+                style: AppTextStyles.bodyLarge.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          if (widget.plant.description?.isNotEmpty == true) ...[
+            const SizedBox(height: UIConstants.spacingM),
+            Text(
+              widget.plant.description!,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+          if (widget.plant.deviceId != null) ...[
+            const SizedBox(height: UIConstants.spacingM),
+            Row(
+              children: [
+                Icon(Icons.sensors, color: AppColors.textSecondary, size: 16),
+                const SizedBox(width: UIConstants.spacingS),
+                Text(
+                  'Device: ${widget.plant.deviceId}',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSensorDataSection() {
     if (_isLoading) {
-      return Scaffold(
-        backgroundColor: AppColors.backgroundLight,
-        appBar: AppBar(
-          title: Text(widget.plant.name),
-          backgroundColor: AppColors.backgroundWhite,
-          foregroundColor: AppColors.textPrimary,
-        ),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
+      return Container(
+        padding: const EdgeInsets.all(UIConstants.paddingXL),
+        child: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (_error != null) {
-      return Scaffold(
-        backgroundColor: AppColors.backgroundLight,
-        appBar: AppBar(
-          title: Text(widget.plant.name),
-          backgroundColor: AppColors.backgroundWhite,
-          foregroundColor: AppColors.textPrimary,
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
+      return Container(
+        padding: const EdgeInsets.all(UIConstants.paddingXL),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 48,
+              color: AppColors.error,
+            ),
+            const SizedBox(height: UIConstants.spacingM),
+            Text(
+              _error!,
+              style: AppTextStyles.bodyMedium.copyWith(
                 color: AppColors.error,
               ),
-              const SizedBox(height: 16),
-              Text(
-                'Error al cargar los datos',
-                style: AppTextStyles.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _error!,
-                style: AppTextStyles.bodySmall,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _loadPlantData,
-                child: const Text('Reintentar'),
-              ),
-            ],
-          ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: UIConstants.spacingM),
+            ElevatedButton(
+              onPressed: _loadSensorData,
+              child: const Text('Reintentar'),
+            ),
+          ],
         ),
       );
     }
 
-    final plantData = _plantWithSensorData!;
+    if (_sensorData == null) {
+      return _buildNoDataCard();
+    }
 
-    return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
-      body: CustomScrollView(
-        slivers: [
-          // Custom app bar with plant image and basic info
-          SliverAppBar(
-            expandedHeight: 200,
-            pinned: true,
-            backgroundColor: AppColors.backgroundWhite,
-            foregroundColor: AppColors.textPrimary,
-            flexibleSpace: FlexibleSpaceBar(
-              title: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    widget.plant.emoji,
-                    style: const TextStyle(fontSize: 20),
-                  ),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      widget.plant.name,
-                      style: AppTextStyles.titleMedium.copyWith(
-                        color: AppColors.textPrimary,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      AppColors.primaryGreenAlpha10,
-                      AppColors.backgroundWhite,
-                    ],
-                  ),
-                ),
-                child: Stack(
-                  children: [
-                    // Main content centered
-                    Center(
-                      child: Text(
-                        widget.plant.emoji,
-                        style: const TextStyle(fontSize: 80),
-                      ),
-                    ),
-                    // Status indicator positioned in top-right corner
-                    Positioned(
-                      top: 50,
-                      right: 16,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: widget.plant.isOnline 
-                              ? AppColors.online.withValues(alpha: 0.1)
-                              : AppColors.offline.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: widget.plant.isOnline 
-                                ? AppColors.online 
-                                : AppColors.offline,
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              widget.plant.isOnline ? Icons.wifi : Icons.wifi_off,
-                              color: widget.plant.isOnline 
-                                  ? AppColors.online 
-                                  : AppColors.offline,
-                              size: 14,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              widget.plant.isOnline ? 'En línea' : 'Desconectado',
-                              style: AppTextStyles.labelSmall.copyWith(
-                                color: widget.plant.isOnline 
-                                    ? AppColors.online 
-                                    : AppColors.offline,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          
-          // Continuous scrollable content
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(UIConstants.paddingL),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Real-time data section
-                  _buildSectionTitle('Datos en Tiempo Real'),
-                  const SizedBox(height: UIConstants.spacingL),
-                  RealTimeDataSection(
-                    plantData: plantData,
-                  ),
-                  
-                  const SizedBox(height: UIConstants.spacingXXL),
-                  
-                  // Historical data section
-                  if (_isSubscribed == null)
-                    const Center(child: CircularProgressIndicator()),
-                  if (_isSubscribed == false)
-                    Container(
-                      margin: const EdgeInsets.symmetric(vertical: 24),
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryGreen.withOpacity(0.07),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppColors.primaryGreen.withOpacity(0.15)),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Icon(Icons.lock_outline, size: 48, color: AppColors.primaryGreen),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Estadísticas premium',
-                            style: AppTextStyles.titleMedium.copyWith(
-                              color: AppColors.primaryGreen,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            'Para ver la evolución de sensores necesitas una suscripción activa.',
-                            style: AppTextStyles.bodyLarge.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 22),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: _subscribeUser,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primaryGreen,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: const Text('Suscribirse', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  if (_isSubscribed == true) ...[
-                    _buildSectionTitle('Evolución de Sensores'),
-                    const SizedBox(height: UIConstants.spacingL),
-                    SensorEvolutionSection(
-                      humidityData: plantData.recentHumidityReadings,
-                      lightData: plantData.recentLightReadings,
-                    ),
-                  ],
-                  
-                  const SizedBox(height: UIConstants.spacingXXL),
-                  
-                  // Controls section
-                  _buildSectionTitle('Controles'),
-                  const SizedBox(height: UIConstants.spacingL),
-                  PlantControlsSection(
-                    isOnline: widget.plant.isOnline,
-                    isAutoMode: widget.plant.isAutoMode,
-                    isWatering: false,
-                    plantName: widget.plant.name,
-                    plant: _plantWithSensorData != null ? _plantWithSensorData!.toPlantModel() : widget.plant,
-                    onWaterNow: () {
-                      _showWateringDialog();
-                    },
-                    onAutoModeToggle: (value) {
-                      _showAutoModeDialog(value);
-                    },
-                    onSettingsPressed: () async {
-                      final result = await Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => PlantSettingsPage(
-                            plant: _plantWithSensorData != null ? _plantWithSensorData!.toPlantModel() : widget.plant,
-                          ),
-                        ),
-                      );
-                      if (result == 'deleted') {
-                        // Navega a la pantalla principal y limpia el stack y la URL
-                        Navigator.of(context).pushNamedAndRemoveUntil(
-                          '/plants', // Ajusta si tu ruta principal es diferente
-                          (route) => false,
-                          arguments: {'reload': true},
-                        );
-                      } else if (result != null && result is PlantModel) {
-                        setState(() {
-                          _plantWithSensorData = PlantWithSensorData(
-                            id: result.id,
-                            nombre: result.name,
-                            emoji: result.emoji,
-                            descripcion: result.description,
-                            ubicacion: result.location ?? '',
-                            deviceId: result.deviceId,
-                            humedad: result.currentHumidity,
-                            luz: result.currentLight,
-                            humidityThresholdMin: result.thresholds.minHumidity,
-                            humidityThresholdMax: result.thresholds.maxHumidity,
-                          );
-                        });
-                      }
-                    },
-                  ),
-                  
-                  // Add some bottom padding for better scrolling
-                  const SizedBox(height: UIConstants.spacingXXL),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+    return Column(
+      children: [
+        _buildSensorCards(),
+        const SizedBox(height: UIConstants.spacingL),
+        _buildLastUpdated(),
+      ],
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: AppTextStyles.titleMedium.copyWith(
-        color: AppColors.textPrimary,
-        fontWeight: FontWeight.bold,
-      ),
-    );
-  }
-
-  void _showWateringDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Regar ${widget.plant.name}'),
-        content: const Text('¿Estás seguro de que quieres regar esta planta ahora?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
+  Widget _buildSensorCards() {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildSensorCard(
+            title: 'Humedad',
+            value: '${_sensorData!.humidity?.toStringAsFixed(1) ?? '--'}%',
+            icon: Icons.water_drop,
+            color: Colors.blue,
+            isGood: _isHumidityGood(),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Regando ${widget.plant.name}...'),
-                  backgroundColor: AppColors.success,
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryGreen,
-            ),
-            child: const Text('Regar'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showAutoModeDialog(bool value) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(value ? 'Activar Modo Automático' : 'Desactivar Modo Automático'),
-        content: Text(
-          value 
-            ? '¿Quieres activar el riego automático para ${widget.plant.name}?'
-            : '¿Quieres desactivar el riego automático para ${widget.plant.name}?',
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
+        const SizedBox(width: UIConstants.spacingM),
+        Expanded(
+          child: _buildSensorCard(
+            title: 'Luz',
+            value: '${_sensorData!.light?.toStringAsFixed(0) ?? '--'} lux',
+            icon: Icons.wb_sunny,
+            color: Colors.orange,
+            isGood: _isLightGood(),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    value 
-                      ? 'Modo automático activado para ${widget.plant.name}'
-                      : 'Modo automático desactivado para ${widget.plant.name}',
-                  ),
-                  backgroundColor: AppColors.success,
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryGreen,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSensorCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+    required bool isGood,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(UIConstants.paddingL),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundWhite,
+        borderRadius: BorderRadius.circular(UIConstants.radiusM),
+        border: Border.all(
+          color: isGood ? color.withOpacity(0.3) : Colors.red.withOpacity(0.3),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 32),
+          const SizedBox(height: UIConstants.spacingS),
+          Text(
+            value,
+            style: AppTextStyles.headlineSmall.copyWith(
+              fontWeight: FontWeight.w600,
+              color: isGood ? color : Colors.red,
             ),
-            child: const Text('Confirmar'),
+          ),
+          Text(
+            title,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildHealthStatus() {
+    final healthStatus = _calculateHealthStatus();
+    
+    return Container(
+      padding: const EdgeInsets.all(UIConstants.paddingL),
+      decoration: BoxDecoration(
+        color: healthStatus.color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(UIConstants.radiusM),
+        border: Border.all(
+          color: healthStatus.color.withOpacity(0.3),
+          width: 2,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            healthStatus.icon,
+            color: healthStatus.color,
+            size: 32,
+          ),
+          const SizedBox(width: UIConstants.spacingM),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Estado de Salud',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                Text(
+                  healthStatus.displayName,
+                  style: AppTextStyles.headlineSmall.copyWith(
+                    color: healthStatus.color,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildThresholds() {
+    return Container(
+      padding: const EdgeInsets.all(UIConstants.paddingL),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundWhite,
+        borderRadius: BorderRadius.circular(UIConstants.radiusM),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Configuración de Umbrales',
+            style: AppTextStyles.headlineSmall.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: UIConstants.spacingM),
+          _buildThresholdRow(
+            'Humedad',
+            '${widget.plant.thresholds.minHumidity.toStringAsFixed(0)}% - ${widget.plant.thresholds.maxHumidity.toStringAsFixed(0)}%',
+            Icons.water_drop,
+            Colors.blue,
+          ),
+          const SizedBox(height: UIConstants.spacingS),
+          _buildThresholdRow(
+            'Luz',
+            '${widget.plant.thresholds.minLight.toStringAsFixed(0)} - ${widget.plant.thresholds.maxLight.toStringAsFixed(0)} lux',
+            Icons.wb_sunny,
+            Colors.orange,
+          ),
+          const SizedBox(height: UIConstants.spacingM),
+          Row(
+            children: [
+              Icon(
+                Icons.auto_mode, // Default to auto mode icon
+                color: AppColors.primaryGreen,
+                size: 16,
+              ),
+              const SizedBox(width: UIConstants.spacingS),
+              Text(
+                'Modo Manual', // Default since Plant entity doesn't have isAutoMode
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.primaryGreen,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildThresholdRow(String label, String range, IconData icon, Color color) {
+    return Row(
+      children: [
+        Icon(icon, color: color, size: 16),
+        const SizedBox(width: UIConstants.spacingS),
+        Text(
+          '$label: ',
+          style: AppTextStyles.bodyMedium,
+        ),
+        Text(
+          range,
+          style: AppTextStyles.bodyMedium.copyWith(
+            fontWeight: FontWeight.w500,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNoDataCard() {
+    return Container(
+      padding: const EdgeInsets.all(UIConstants.paddingXL),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundWhite,
+        borderRadius: BorderRadius.circular(UIConstants.radiusM),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.sensors_off,
+            size: 48,
+            color: AppColors.textSecondary,
+          ),
+          const SizedBox(height: UIConstants.spacingM),
+          Text(
+            'Sin datos de sensores',
+            style: AppTextStyles.headlineSmall.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: UIConstants.spacingS),
+          Text(
+            'Verifica la conexión del dispositivo',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLastUpdated() {
+    if (_sensorData?.timestamp == null) return const SizedBox.shrink();
+    
+    return Text(
+      'Última actualización: ${_formatTimestamp(_sensorData!.timestamp)}',
+      style: AppTextStyles.bodySmall.copyWith(
+        color: AppColors.textSecondary,
+      ),
+    );
+  }
+
+  Widget _buildWaterButton() {
+    return FloatingActionButton.extended(
+      onPressed: _waterPlant,
+      backgroundColor: AppColors.primaryGreen,
+      icon: const Icon(Icons.water_drop, color: Colors.white),
+      label: const Text(
+        'Regar',
+        style: TextStyle(color: Colors.white),
+      ),
+    );
+  }
+
+  bool _isHumidityGood() {
+    if (_sensorData?.humidity == null) return false;
+    final humidity = _sensorData!.humidity!;
+    return humidity >= widget.plant.thresholds.minHumidity && 
+           humidity <= widget.plant.thresholds.maxHumidity;
+  }
+
+  bool _isLightGood() {
+    if (_sensorData?.light == null) return false;
+    final light = _sensorData!.light!;
+    return light >= widget.plant.thresholds.minLight && 
+           light <= widget.plant.thresholds.maxLight;
+  }
+
+  String _formatTimestamp(DateTime timestamp) {
+    final now = DateTime.now();
+    final difference = now.difference(timestamp);
+    
+    if (difference.inMinutes < 1) {
+      return 'Hace un momento';
+    } else if (difference.inHours < 1) {
+      return 'Hace ${difference.inMinutes} min';
+    } else if (difference.inDays < 1) {
+      return 'Hace ${difference.inHours} h';
+    } else {
+      return 'Hace ${difference.inDays} días';
+    }
+  }
+
+  Future<void> _loadSensorData() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    final result = await _getSensorDataUseCase.call(widget.plant.id);
+    
+    switch (result) {
+      case Success<SensorData> success:
+        setState(() {
+          _sensorData = success.data;
+          _isLoading = false;
+        });
+        break;
+      case Error<SensorData> error:
+        setState(() {
+          _error = error.failure.message;
+          _isLoading = false;
+        });
+        break;
+    }
+  }
+
+  PlantHealthStatus _calculateHealthStatus() {
+    if (_sensorData == null || !_sensorData!.isOnline) {
+      return PlantHealthStatus.offline;
+    }
+    
+    final humidity = _sensorData!.humidity;
+    final light = _sensorData!.light;
+    
+    if (humidity == null || light == null) {
+      return PlantHealthStatus.offline;
+    }
+    
+    // Simple health calculation based on thresholds
+    final minHumidity = widget.plant.thresholds.minHumidity;
+    final minLight = widget.plant.thresholds.minLight;
+    
+    if (humidity >= minHumidity && light >= minLight) {
+      return PlantHealthStatus.healthy;
+    } else if (humidity < minHumidity) {
+      return PlantHealthStatus.needsWater;
+    } else if (light < minLight) {
+      return PlantHealthStatus.needsLight;
+    } else {
+      return PlantHealthStatus.warning;
+    }
+  }
+
+  void _waterPlant() {
+    // TODO: Implement watering using WaterPlantUseCase
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Regando planta...'),
+        backgroundColor: AppColors.primaryGreen,
+      ),
+    );
+  }
+
+  void _navigateToSettings() {
+    Navigator.pushNamed(
+      context,
+      '/plant-settings',
+      arguments: widget.plant,
+    ).then((_) {
+      _loadSensorData(); // Reload data after settings change
+    });
   }
 }

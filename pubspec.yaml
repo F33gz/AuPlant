@@ -1,5 +1,5 @@
 name: auplant
-description: "A new Flutter project."
+description: "Smart Plant Care IoT App - Monitor and care for your plants intelligently"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -31,13 +31,26 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
+  # UI & Icons
   cupertino_icons: ^1.0.8
   google_fonts: ^6.2.1
-  supabase_flutter: ^2.5.2
   flutter_svg: ^2.0.10
   fl_chart: ^0.68.0
+
+  # Backend & Database
+  supabase_flutter: ^2.5.2
+
+  # Architecture & State Management
+  flutter_bloc: ^8.1.3
+  get_it: ^7.6.4
+  equatable: ^2.0.5
+  dartz: ^0.10.1
+
+  # Network & Connectivity
+  connectivity_plus: ^5.0.2
+
+  # Utilities
+  intl: ^0.19.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

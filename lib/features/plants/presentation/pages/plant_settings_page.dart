@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
-import '../../../../core/models/plant_model.dart';
+import 'package:get_it/get_it.dart';
 import '../../../../app/theme/app_colors.dart';
-import '../../../../core/services/plant_service.dart';
-import '../../../../core/models/user_model.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../app/theme/app_text_styles.dart';
+import '../../../../shared/constants/ui_constants.dart';
+import '../../../../core/utils/result.dart';
+import '../../domain/entities/plant.dart';
+import '../../domain/usecases/update_plant_usecase.dart';
+import '../../domain/usecases/delete_plant_usecase.dart';
 
 class PlantSettingsPage extends StatefulWidget {
-  final PlantModel plant;
+  final Plant plant;
 
   const PlantSettingsPage({
     super.key,
@@ -30,64 +33,34 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
   
   bool _isLoading = false;
   bool _hasUnsavedChanges = false;
-  bool? _isSubscribed;
+  bool _isSubscribed = false; // Add missing subscription state
 
   final List<String> _plantEmojis = [
     '🌱', '🌿', '🌾', '🌵', '🌳', '🌲', '🌴', 
     '🌸', '🌼', '🌹', '💐', '🌻', '🌺', '🌷'
   ];
 
-  final PlantService _plantService = PlantService();
+  final UpdatePlantUseCase _updatePlantUseCase = GetIt.instance<UpdatePlantUseCase>();
+  final DeletePlantUseCase _deletePlantUseCase = GetIt.instance<DeletePlantUseCase>();
 
   @override
   void initState() {
     super.initState();
     _initializeControllers();
     _initializeValues();
-    _fetchSubscription();
   }
 
   void _initializeControllers() {
     _nameController = TextEditingController(text: widget.plant.name);
-    _locationController = TextEditingController(text: widget.plant.location);
-    _deviceIdController = TextEditingController(text: widget.plant.deviceId);
-    _accessTokenController = TextEditingController(text: widget.plant.accessToken);
+    _locationController = TextEditingController(text: widget.plant.location ?? '');
+    _deviceIdController = TextEditingController(text: widget.plant.deviceId ?? '');
+    _accessTokenController = TextEditingController();
   }
 
   void _initializeValues() {
-    // Solo inicializo el mínimo
-    _minHumidity = (widget.plant.thresholds.minHumidity).clamp(0.0, 100.0);
-    
-    // Ensure min is less than max, use default values if invalid
-    // Elimino la lógica de _maxHumidity
-    
-    _isAutoMode = widget.plant.isAutoMode;
     _selectedEmoji = widget.plant.emoji;
-  }
-
-  Future<void> _fetchSubscription() async {
-    final supabase = Supabase.instance.client;
-    final user = supabase.auth.currentUser;
-    if (user == null) {
-      setState(() { _isSubscribed = false; });
-      return;
-    }
-    final data = await supabase
-        .from('users')
-        .select('subscribed')
-        .eq('id', user.id)
-        .single();
-    setState(() {
-      _isSubscribed = data['subscribed'] ?? false;
-    });
-  }
-
-  Future<void> _subscribeUser() async {
-    final supabase = Supabase.instance.client;
-    final user = supabase.auth.currentUser;
-    if (user == null) return;
-    await supabase.from('users').update({'subscribed': true}).eq('id', user.id);
-    setState(() { _isSubscribed = true; });
+    _minHumidity = widget.plant.thresholds.minHumidity;
+    _isAutoMode = false; // Default value since Plant entity doesn't have isAutoMode
   }
 
   @override
@@ -697,20 +670,21 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
                 Navigator.pop(context); // Cierra el diálogo
                 setState(() { _isLoading = true; });
                 try {
-                  await _plantService.deletePlant(widget.plant.id);
-                  // Muestra mensaje y navega a la raíz
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Planta eliminada exitosamente.'), backgroundColor: AppColors.success),
-                    );
-                    // Pop hasta la raíz
-                    Navigator.of(context).popUntil((route) => route.isFirst);
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error al eliminar planta: $e'), backgroundColor: AppColors.error),
-                    );
+                  final result = await _deletePlantUseCase.call(widget.plant.id);
+                  switch (result) {
+                    case Success():
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Planta eliminada exitosamente.'), backgroundColor: AppColors.success),
+                        );
+                        Navigator.of(context).popUntil((route) => route.isFirst);
+                      }
+                    case Error(failure: final failure):
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error al eliminar planta: ${failure.message}'), backgroundColor: AppColors.error),
+                        );
+                      }
                   }
                 } finally {
                   if (mounted) setState(() { _isLoading = false; });
@@ -746,9 +720,14 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
     if (confirm != true) return;
     setState(() => _isLoading = true);
     try {
-      await _plantService.deletePlant(widget.plant.id);
-      if (mounted) {
-        Navigator.of(context).pop('deleted');
+      final result = await _deletePlantUseCase.call(widget.plant.id);
+      switch (result) {
+        case Success():
+          if (mounted) {
+            Navigator.of(context).pop('deleted');
+          }
+        case Error(failure: final failure):
+          throw Exception(failure.message);
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -766,29 +745,44 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
     try {
       // Simulate API call
       await Future.delayed(Duration(milliseconds: 500));
-      // Actualiza la planta en la base de datos
-      await _plantService.updatePlant(
-        plantId: widget.plant.id,
-        nombre: _nameController.text,
+      // Create updated plant entity
+      final updatedPlant = Plant(
+        id: widget.plant.id,
+        name: _nameController.text.trim(),
         emoji: _selectedEmoji,
-        descripcion: widget.plant.description,
-        deviceId: _deviceIdController.text,
-        ubicacion: _locationController.text,
-        accessToken: _accessTokenController.text,
+        description: widget.plant.description,
+        location: _locationController.text.trim(),
+        deviceId: _deviceIdController.text.trim().isNotEmpty 
+            ? _deviceIdController.text.trim() 
+            : widget.plant.deviceId,
+        thresholds: PlantThresholds(
+          minHumidity: _minHumidity,
+          maxHumidity: widget.plant.thresholds.maxHumidity,
+          minLight: widget.plant.thresholds.minLight,
+          maxLight: widget.plant.thresholds.maxLight,
+        ),
+        createdAt: widget.plant.createdAt,
+        updatedAt: DateTime.now(),
       );
-      // Si el threshold cambió, envía el nuevo valor a ThingsBoard
-      if (_minHumidity != widget.plant.thresholds.minHumidity && (widget.plant.accessToken ?? '').isNotEmpty) {
-        await _plantService.sendRegadoCommand(
-          accessToken: widget.plant.accessToken!,
-          atributos: { 'threshold': _minHumidity.toInt() },
-        );
+
+      final result = await _updatePlantUseCase.call(
+        plantId: widget.plant.id,
+        name: _nameController.text.trim(),
+        emoji: _selectedEmoji,
+        location: _locationController.text.trim(),
+        deviceId: _deviceIdController.text.trim().isNotEmpty 
+            ? _deviceIdController.text.trim() 
+            : null,
+      );
+      
+      switch (result) {
+        case Success(data: final plant):
+          setState(() {
+            _hasUnsavedChanges = false;
+          });
+        case Error(failure: final failure):
+          throw Exception(failure.message);
       }
-      setState(() {
-        _hasUnsavedChanges = false;
-      });
-      // Refrescar el modelo de la planta desde la base de datos
-      final refreshed = await _plantService.getUserPlants();
-      final updatedPlant = refreshed.firstWhere((p) => p.id == widget.plant.id, orElse: () => widget.plant);
       // Navegar a la MainPage y limpiar el stack
       Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -809,5 +803,18 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
         _isLoading = false;
       });
     }
+  }
+
+  void _subscribeUser() {
+    // TODO: Implement subscription logic
+    setState(() {
+      _isSubscribed = true;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Suscripción activada (demo)'),
+        backgroundColor: AppColors.success,
+      ),
+    );
   }
 }

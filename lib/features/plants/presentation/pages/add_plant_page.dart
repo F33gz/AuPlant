@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../../../core/services/plant_service.dart';
+import 'package:get_it/get_it.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/app_colors.dart';
+import '../../../../shared/constants/ui_constants.dart';
+import '../../../../core/utils/result.dart';
+import '../../domain/entities/plant.dart';
+import '../../domain/usecases/add_plant_usecase.dart';
 
 class AddPlantPage extends StatefulWidget {
   const AddPlantPage({super.key});
@@ -16,7 +21,7 @@ class _AddPlantPageState extends State<AddPlantPage> {
   final _deviceIdController = TextEditingController();
   final _accessTokenController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final PlantService _plantService = PlantService();
+  final AddPlantUseCase _addPlantUseCase = GetIt.instance<AddPlantUseCase>();
   
   String _selectedEmoji = '🌱';
   bool _isLoading = false;
@@ -353,7 +358,7 @@ class _AddPlantPageState extends State<AddPlantPage> {
                   SizedBox(width: 16),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _addPlant,
+                      onPressed: _isLoading ? null : _savePlant,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryGreen,
                         foregroundColor: AppColors.textLight,
@@ -386,54 +391,33 @@ class _AddPlantPageState extends State<AddPlantPage> {
     );
   }
   
-  void _addPlant() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
-      
-      try {
-        // Add plant using the service
-        final plant = await _plantService.addPlant(
-          nombre: _nameController.text,
-          deviceId: _deviceIdController.text,
-          emoji: _selectedEmoji,
-          descripcion: _descriptionController.text.isNotEmpty 
-              ? _descriptionController.text 
-              : _selectedPlantType,
-          ubicacion: _locationController.text.isNotEmpty 
-              ? _locationController.text 
-              : null,
-          accessToken: _accessTokenController.text,
+  Future<void> _savePlant() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    final result = await _addPlantUseCase.call(
+      name: _nameController.text.trim(),
+      deviceId: _deviceIdController.text.trim(),
+      emoji: _selectedEmoji,
+      description: _descriptionController.text.trim(),
+      location: _locationController.text.trim(),
+    );
+    
+    switch (result) {
+      case Success<Plant> success:
+        setState(() => _isLoading = false);
+        Navigator.of(context).pop(success.data);
+        break;
+      case Error<Plant> error:
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${error.failure.message}'),
+            backgroundColor: AppColors.error,
+          ),
         );
-        
-        // Show success message
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('¡Planta agregada exitosamente!'),
-              backgroundColor: AppColors.success,
-            ),
-          );
-          // Navegar a la MainPage y limpiar el stack
-          Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error al agregar planta: $e'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
-      }
+        break;
     }
   }
 }
