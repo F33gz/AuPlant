@@ -8,7 +8,6 @@ import '../../features/plants/presentation/pages/add_plant_page.dart';
 import '../../features/plants/presentation/pages/plant_settings_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/signup_page.dart';
-import '../../features/monitoring/presentation/pages/monitoring_dashboard_page.dart';
 import '../../features/plants/domain/entities/plant.dart';
 
 /// Route Generator

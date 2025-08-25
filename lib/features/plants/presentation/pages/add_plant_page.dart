@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import '../../../../app/theme/app_colors.dart';
-import '../../../../app/theme/app_colors.dart';
-import '../../../../shared/constants/ui_constants.dart';
 import '../../../../core/utils/result.dart';
+import '../../../../shared/widgets/forms/custom_text_field.dart';
+import '../../../../shared/widgets/forms/custom_dropdown.dart';
+import '../../../../shared/widgets/buttons/action_buttons.dart';
+import '../widgets/plant_emoji_selector.dart';
 import '../../domain/entities/plant.dart';
 import '../../domain/usecases/add_plant_usecase.dart';
 
@@ -51,6 +53,7 @@ class _AddPlantPageState extends State<AddPlantPage> {
     _locationController.dispose();
     _deviceIdController.dispose();
     _accessTokenController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -58,336 +61,163 @@ class _AddPlantPageState extends State<AddPlantPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
-      appBar: AppBar(
-        backgroundColor: AppColors.backgroundLight,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Agregar Nueva Planta',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-          ),
+      appBar: _buildAppBar(),
+      body: _buildBody(),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: AppColors.backgroundLight,
+      elevation: 0,
+      leading: IconButton(
+        icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
+        onPressed: () => Navigator.pop(context),
+      ),
+      title: Text(
+        'Agregar Nueva Planta',
+        style: TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
         ),
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Plant Name
-              Text(
-                'Nombre de la planta',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              SizedBox(height: 8),
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  hintText: 'Ingresa el nombre de la planta',
-                  filled: true,
-                  fillColor: AppColors.backgroundWhite,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppColors.border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppColors.border),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppColors.primaryGreen),
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor ingresa el nombre de la planta';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 24),
-              
-              // Choose Plant Icon
-              Text(
-                'Elige el icono de la planta',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              SizedBox(height: 8),
-              Container(
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.backgroundWhite,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 8,
-                    childAspectRatio: 1,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
-                  ),
-                  itemCount: _plantEmojis.length,
-                  itemBuilder: (context, index) {
-                    final emoji = _plantEmojis[index];
-                    final isSelected = emoji == _selectedEmoji;
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedEmoji = emoji;
-                        });
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: isSelected ? AppColors.primaryGreenAlpha10 : Colors.transparent,
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: isSelected ? AppColors.primaryGreen : Colors.transparent,
-                            width: 2,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            emoji,
-                            style: TextStyle(fontSize: 20),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              SizedBox(height: 24),
-              
-              // Plant Type
-              Text(
-                'Tipo de planta',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: _selectedPlantType,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: AppColors.backgroundWhite,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppColors.border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppColors.border),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppColors.primaryGreen),
-                  ),
-                ),
-                items: _plantTypes.map((String type) {
-                  return DropdownMenuItem<String>(
-                    value: type,
-                    child: Text(type),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedPlantType = newValue!;
-                  });
-                },
-              ),
-              SizedBox(height: 24),
-              
-              // Location
-              Text(
-                'Ubicación',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              SizedBox(height: 8),
-              TextFormField(
-                controller: _locationController,
-                decoration: InputDecoration(
-                  hintText: 'e.g., Jardín, Invernadero, Sala de estar',
-                  filled: true,
-                  fillColor: AppColors.backgroundWhite,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppColors.border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppColors.border),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppColors.primaryGreen),
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor ingresa una ubicación';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 24),
-              
-              // IoT Device
-              Text(
-                'Dispositivo IoT',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              SizedBox(height: 8),
-              TextFormField(
-                controller: _deviceIdController,
-                decoration: InputDecoration(
-                  hintText: 'Ingresa el ID del dispositivo o escanea el código QR',
-                  filled: true,
-                  fillColor: AppColors.backgroundWhite,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppColors.border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppColors.border),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppColors.primaryGreen),
-                  ),
-                  suffixIcon: IconButton(
-                    icon: Icon(Icons.qr_code_scanner, color: AppColors.textSecondary),
-                    onPressed: () {
-                      // QR code scanner
-                    },
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor ingresa el ID del dispositivo';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 16),
-              // Access Token
-              Text(
-                'Token de acceso',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              SizedBox(height: 8),
-              TextFormField(
-                controller: _accessTokenController,
-                decoration: InputDecoration(
-                  hintText: 'Ingresa el token de acceso',
-                  filled: true,
-                  fillColor: AppColors.backgroundWhite,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppColors.border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppColors.border),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppColors.primaryGreen),
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor ingresa un token de acceso';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 24),
-              
-              // Buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        side: BorderSide(color: AppColors.border),
-                        foregroundColor: AppColors.textSecondary,
-                      ),
-                      child: Text('Cancelar'),
-                    ),
-                  ),
-                  SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _savePlant,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryGreen,
-                        foregroundColor: AppColors.textLight,
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: _isLoading
-                          ? SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(AppColors.textLight),
-                              ),
-                            )
-                          : Text(
-                              'Agregar Planta',
-                              style: TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+    );
+  }
+
+  Widget _buildBody() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildPlantNameField(),
+            const SizedBox(height: 24),
+            _buildEmojiSelector(),
+            const SizedBox(height: 24),
+            _buildPlantTypeDropdown(),
+            const SizedBox(height: 24),
+            _buildLocationField(),
+            const SizedBox(height: 24),
+            _buildDeviceField(),
+            const SizedBox(height: 16),
+            _buildAccessTokenField(),
+            const SizedBox(height: 24),
+            _buildActionButtons(),
+          ],
         ),
       ),
+    );
+  }
+
+  Widget _buildPlantNameField() {
+    return CustomTextField(
+      controller: _nameController,
+      label: 'Nombre de la planta',
+      hintText: 'Ingresa el nombre de la planta',
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Por favor ingresa el nombre de la planta';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildEmojiSelector() {
+    return PlantEmojiSelector(
+      selectedEmoji: _selectedEmoji,
+      plantEmojis: _plantEmojis,
+      onEmojiSelected: (emoji) {
+        setState(() {
+          _selectedEmoji = emoji;
+        });
+      },
+    );
+  }
+
+  Widget _buildPlantTypeDropdown() {
+    return CustomDropdown<String>(
+      value: _selectedPlantType,
+      items: _plantTypes,
+      label: 'Tipo de planta',
+      getDisplayText: (type) => type,
+      onChanged: (String? newValue) {
+        setState(() {
+          _selectedPlantType = newValue!;
+        });
+      },
+    );
+  }
+
+  Widget _buildLocationField() {
+    return CustomTextField(
+      controller: _locationController,
+      label: 'Ubicación',
+      hintText: 'e.g., Jardín, Invernadero, Sala de estar',
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Por favor ingresa una ubicación';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildDeviceField() {
+    return CustomTextField(
+      controller: _deviceIdController,
+      label: 'Dispositivo IoT',
+      hintText: 'Ingresa el ID del dispositivo o escanea el código QR',
+      suffixIcon: IconButton(
+        icon: Icon(Icons.qr_code_scanner, color: AppColors.textSecondary),
+        onPressed: () {
+          // TODO: Implement QR code scanner
+        },
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Por favor ingresa el ID del dispositivo';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildAccessTokenField() {
+    return CustomTextField(
+      controller: _accessTokenController,
+      label: 'Token de acceso',
+      hintText: 'Ingresa el token de acceso',
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Por favor ingresa un token de acceso';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return Row(
+      children: [
+        Expanded(
+          child: SecondaryButton(
+            text: 'Cancelar',
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: PrimaryButton(
+            text: 'Agregar Planta',
+            isLoading: _isLoading,
+            onPressed: _savePlant,
+          ),
+        ),
+      ],
     );
   }
   
@@ -407,16 +237,20 @@ class _AddPlantPageState extends State<AddPlantPage> {
     switch (result) {
       case Success<Plant> success:
         setState(() => _isLoading = false);
-        Navigator.of(context).pop(success.data);
+        if (mounted) {
+          Navigator.of(context).pop(success.data);
+        }
         break;
       case Error<Plant> error:
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${error.failure.message}'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${error.failure.message}'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
         break;
     }
   }

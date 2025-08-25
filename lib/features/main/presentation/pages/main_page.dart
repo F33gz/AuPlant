@@ -3,7 +3,6 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../shared/constants/ui_constants.dart';
 import '../../../plants/presentation/pages/plants_overview_page.dart';
-import '../../../monitoring/presentation/pages/monitoring_dashboard_page.dart';
 import '../../../auth/presentation/pages/profile_page.dart';
 
 /// Main Page with Bottom Navigation

@@ -4,6 +4,9 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../shared/constants/ui_constants.dart';
 import '../../../../core/utils/result.dart';
+import '../../../../shared/widgets/empty_state_widget.dart';
+import '../widgets/plant_list_item.dart';
+import '../widgets/plant_card.dart';
 import '../../domain/entities/plant.dart';
 import '../../domain/usecases/get_plants_usecase.dart';
 
@@ -133,105 +136,39 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
     return RefreshIndicator(
       onRefresh: _loadPlants,
       color: AppColors.primaryGreen,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(UIConstants.paddingL),
-        itemCount: _plants.length,
-        itemBuilder: (context, index) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: UIConstants.spacingM),
-            child: Card(
-              elevation: 2,
-              margin: const EdgeInsets.symmetric(
-                horizontal: UIConstants.paddingM,
-                vertical: UIConstants.paddingS,
-              ),
-              child: ListTile(
-                leading: Text(
-                  _plants[index].emoji,
-                  style: const TextStyle(fontSize: 32),
-                ),
-                title: Text(
-                  _plants[index].name,
-                  style: AppTextStyles.bodyLarge.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                subtitle: Text(
-                  _plants[index].location ?? 'Sin ubicación',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                trailing: Icon(
-                  Icons.arrow_forward_ios,
-                  color: AppColors.textSecondary,
-                  size: 16,
-                ),
-                onTap: () => _navigateToPlantDetail(_plants[index]),
-              ),
-            ),
-          );
-        },
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: _buildPlantGrid(_plants),
       ),
     );
   }
 
-  /// Builds the header section with description
-  Widget _buildHeader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '¡Hola! 👋',
-          style: AppTextStyles.headlineMedium.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: UIConstants.spacingS),
-        Text(
-          'Monitorea tus plantas y mantén tu jardín saludable',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ],
+    // Plant grid builder
+  Widget _buildPlantGrid(List<Plant> plants) {
+    return GridView.builder(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.85,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+      ),
+      itemCount: plants.length,
+      itemBuilder: (context, index) {
+        return PlantCard(
+          plant: plants[index],
+          onTap: () => _navigateToPlantDetail(plants[index]),
+        );
+      },
     );
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.eco,
-            size: 80,
-            color: AppColors.textSecondary,
-          ),
-          const SizedBox(height: UIConstants.spacingL),
-          Text(
-            'No tienes plantas aún',
-            style: AppTextStyles.titleMedium.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: UIConstants.spacingS),
-          Text(
-            'Añade tu primera planta para empezar a monitorear tu jardón',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: UIConstants.spacingXL),
-          ElevatedButton.icon(
-            onPressed: _handleAddPlant,
-            icon: const Icon(Icons.add),
-            label: const Text('Añadir planta'),
-          ),
-        ],
-      ),
+    return EmptyStateWidget(
+      icon: Icons.eco,
+      title: 'No tienes plantas aún',
+      subtitle: 'Añade tu primera planta para empezar a monitorear tu jardín',
+      actionText: 'Añadir planta',
+      onActionPressed: _handleAddPlant,
     );
   }
 

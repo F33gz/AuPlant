@@ -16,9 +16,6 @@ import '../../features/plants/domain/usecases/get_sensor_data_usecase.dart';
 import '../../features/plants/domain/usecases/update_plant_usecase.dart';
 import '../../features/plants/domain/usecases/delete_plant_usecase.dart';
 
-// Features - Auth
-import '../../features/auth/domain/repositories/auth_repository.dart';
-
 final GetIt sl = GetIt.instance;
 
 /// Initialize dependency injection

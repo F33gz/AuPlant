@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/routes/app_routes.dart';
-import '../../../../core/models/plant_model.dart';
+import '../../domain/entities/plant.dart';
 import '../../../../shared/constants/ui_constants.dart';
 
 /// Plant Card Widget
@@ -10,11 +10,13 @@ import '../../../../shared/constants/ui_constants.dart';
 /// A card widget that displays plant information including name, emoji,
 /// sensor data, and status. Navigates to plant detail when tapped.
 class PlantCard extends StatelessWidget {
-  final PlantModel plant;
+  final Plant plant;
+  final VoidCallback? onTap;
 
   const PlantCard({
     super.key,
     required this.plant,
+    this.onTap,
   });
 
   @override
@@ -22,7 +24,7 @@ class PlantCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: UIConstants.spacingS),
       child: GestureDetector(
-        onTap: () {
+        onTap: onTap ?? () {
           Navigator.pushNamed(
             context,
             AppRoutes.plantDetail,
@@ -104,7 +106,7 @@ class PlantCard extends StatelessWidget {
       children: [
         Expanded(
           child: Text(
-            'Humedad: ${plant.currentHumidity.toStringAsFixed(0)}%',
+            'Humedad: ${plant.thresholds.minHumidity.toStringAsFixed(0)}-${plant.thresholds.maxHumidity.toStringAsFixed(0)}%',
             style: AppTextStyles.bodySmall,
             overflow: TextOverflow.ellipsis,
           ),
@@ -112,7 +114,7 @@ class PlantCard extends StatelessWidget {
         const SizedBox(width: UIConstants.spacingL),
         Expanded(
           child: Text(
-            'Luz: ${plant.currentLight.toStringAsFixed(0)} lx',
+            'Luz: ${plant.thresholds.minLight.toStringAsFixed(0)}-${plant.thresholds.maxLight.toStringAsFixed(0)} lx',
             style: AppTextStyles.bodySmall,
             overflow: TextOverflow.ellipsis,
           ),
@@ -127,17 +129,17 @@ class PlantCard extends StatelessWidget {
       children: [
         Expanded(
           child: Text(
-            plant.formattedLastWatered,
+            'Última actualización: Hoy',
             style: AppTextStyles.bodySmall,
             overflow: TextOverflow.ellipsis,
           ),
         ),
         const SizedBox(width: UIConstants.spacingL),
         Text(
-          plant.isOnline ? 'En línea' : 'Sin conexión',
-          style: plant.isOnline 
-              ? AppTextStyles.statusOnline 
-              : AppTextStyles.statusOffline,
+          'Activa',
+          style: AppTextStyles.bodySmall.copyWith(
+            color: AppColors.success,
+          ),
         ),
       ],
     );
