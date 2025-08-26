@@ -9,12 +9,42 @@ class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
   Future<void> _logout(BuildContext context) async {
-    await Supabase.instance.client.auth.signOut();
-    if (context.mounted) {
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        AppRoutes.login,
-        (route) => false,
+    try {
+      // Mostrar indicador de carga
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
       );
+
+      // Cerrar sesión en Supabase
+      await Supabase.instance.client.auth.signOut();
+      
+      // Cerrar indicador de carga si el context sigue montado
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Cerrar loading dialog
+      }
+
+      // Navegar a login si el context sigue montado
+      if (context.mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRoutes.login,
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      // En caso de error, cerrar loading dialog y mostrar error
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Cerrar loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al cerrar sesión: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -214,22 +244,22 @@ class ProfilePage extends StatelessWidget {
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text('Cerrar Sesión'),
           content: const Text('¿Estás seguro de que quieres cerrar sesión?'),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: Text(
                 'Cancelar',
                 style: TextStyle(color: AppColors.textSecondary),
               ),
             ),
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _logout(context);
+              onPressed: () async {
+                Navigator.of(dialogContext).pop(); // Cerrar diálogo primero
+                await _logout(context); // Usar el context original de la página
               },
               child: const Text(
                 'Cerrar Sesión',
