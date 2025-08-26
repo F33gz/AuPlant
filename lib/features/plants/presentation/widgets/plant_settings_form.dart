@@ -3,7 +3,6 @@ import '../../../../shared/widgets/forms/plant_form_field.dart';
 import '../../../../shared/widgets/forms/emoji_selector.dart';
 import '../../../../shared/utils/form_validators.dart';
 import '../../../../app/theme/app_colors.dart';
-import '../../domain/entities/plant.dart';
 
 class PlantSettingsForm extends StatelessWidget {
   final GlobalKey<FormState> formKey;
@@ -112,7 +111,7 @@ class PlantSettingsForm extends StatelessWidget {
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.info.withOpacity(0.1),
+                      color: AppColors.info.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(

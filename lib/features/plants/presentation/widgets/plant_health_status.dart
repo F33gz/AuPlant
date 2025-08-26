@@ -51,7 +51,7 @@ class PlantHealthStatus extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: healthStatus.color.withOpacity(0.1),
+                color: healthStatus.color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(

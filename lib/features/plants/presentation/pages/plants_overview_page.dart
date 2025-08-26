@@ -5,7 +5,6 @@ import '../../../../app/theme/app_text_styles.dart';
 import '../../../../shared/constants/ui_constants.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../shared/widgets/empty_state_widget.dart';
-import '../widgets/plant_list_item.dart';
 import '../widgets/plant_card.dart';
 import '../../domain/entities/plant.dart';
 import '../../domain/usecases/get_plants_usecase.dart';

@@ -78,7 +78,7 @@ class SensorDataCard extends StatelessWidget {
                   child: _SensorMetric(
                     icon: Icons.science,
                     label: 'pH',
-                    value: '${(sensorData.temperature != null ? 7.0 : 0.0).toStringAsFixed(1)}', // Mock pH data
+                    value: '7.0', // Mock pH data
                     color: AppColors.success,
                   ),
                 ),
@@ -109,7 +109,7 @@ class _SensorMetric extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(

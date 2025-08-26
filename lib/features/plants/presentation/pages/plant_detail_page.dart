@@ -71,7 +71,7 @@ class _PlantDetailPageState extends State<PlantDetailPage> {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: AppColors.primaryGreen.withOpacity(0.1),
+              color: AppColors.primaryGreen.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Center(

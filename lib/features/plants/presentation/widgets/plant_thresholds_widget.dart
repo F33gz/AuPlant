@@ -20,11 +20,11 @@ class PlantThresholdsWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(UIConstants.paddingL),
       decoration: BoxDecoration(
-        color: AppColors.backgroundWhite,
+        color: AppColors.backgroundWhite.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(UIConstants.radiusM),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),

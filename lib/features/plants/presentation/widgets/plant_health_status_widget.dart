@@ -32,10 +32,10 @@ class PlantHealthStatusWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(UIConstants.paddingL),
       decoration: BoxDecoration(
-        color: healthStatus.color.withOpacity(0.1),
+        color: healthStatus.color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(UIConstants.radiusM),
         border: Border.all(
-          color: healthStatus.color.withOpacity(0.3),
+          color: healthStatus.color.withValues(alpha: 0.3),
           width: 2,
         ),
       ),

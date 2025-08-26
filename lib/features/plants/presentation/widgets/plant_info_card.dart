@@ -20,11 +20,11 @@ class PlantInfoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(UIConstants.paddingL),
       decoration: BoxDecoration(
-        color: AppColors.backgroundWhite,
+        color: AppColors.backgroundWhite.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(UIConstants.radiusM),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -45,10 +45,10 @@ class PlantInfoCard extends StatelessWidget {
               ),
             ],
           ),
-          if (plant.description?.isNotEmpty == true) ...[
+          if (plant.description.isNotEmpty) ...[
             const SizedBox(height: UIConstants.spacingM),
             Text(
-              plant.description!,
+              plant.description,
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppColors.textSecondary,
               ),

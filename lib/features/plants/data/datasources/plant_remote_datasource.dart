@@ -85,7 +85,7 @@ class PlantRemoteDataSourceImpl implements PlantRemoteDataSource {
             'descripcion': description,
             'device_id': deviceId,
             'ubicacion': location,
-            'user_id': session.user?.id,
+            'user_id': session.user.id,
             'access_token': accessToken,
           })
           .select()

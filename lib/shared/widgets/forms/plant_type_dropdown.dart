@@ -28,7 +28,7 @@ class PlantTypeDropdown extends StatelessWidget {
         ),
         SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: selectedType,
+          initialValue: selectedType,
           decoration: InputDecoration(
             filled: true,
             fillColor: AppColors.backgroundWhite,

@@ -10,10 +10,12 @@ class ProfilePage extends StatelessWidget {
 
   Future<void> _logout(BuildContext context) async {
     await Supabase.instance.client.auth.signOut();
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      AppRoutes.login,
-      (route) => false,
-    );
+    if (context.mounted) {
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        AppRoutes.login,
+        (route) => false,
+      );
+    }
   }
 
   @override
@@ -62,7 +64,7 @@ class ProfilePage extends StatelessWidget {
           height: 100,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: AppColors.primaryGreen.withOpacity(0.1),
+            color: AppColors.primaryGreen.withValues(alpha: 0.1),
             border: Border.all(
               color: AppColors.primaryGreen,
               width: 3,
@@ -161,7 +163,7 @@ class ProfilePage extends StatelessWidget {
         borderRadius: BorderRadius.circular(UIConstants.radiusM),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
