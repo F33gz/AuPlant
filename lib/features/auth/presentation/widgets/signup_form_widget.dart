@@ -65,12 +65,8 @@ class _SignupFormWidgetState extends State<SignupFormWidget> {
       controller: _nameController,
       decoration: InputDecoration(
         labelText: 'Nombre completo',
-        prefixIcon: const Icon(Icons.person_outlined),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(UIConstants.radiusM),
-        ),
-        filled: true,
-        fillColor: AppColors.backgroundWhite,
+  prefixIcon: const Icon(Icons.person_outlined),
+  // Inherit borders/fill from AppTheme InputDecorationTheme (light/dark)
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {
@@ -90,12 +86,8 @@ class _SignupFormWidgetState extends State<SignupFormWidget> {
       keyboardType: TextInputType.emailAddress,
       decoration: InputDecoration(
         labelText: 'Correo electrónico',
-        prefixIcon: const Icon(Icons.email_outlined),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(UIConstants.radiusM),
-        ),
-        filled: true,
-        fillColor: AppColors.backgroundWhite,
+  prefixIcon: const Icon(Icons.email_outlined),
+  // Inherit borders/fill from AppTheme InputDecorationTheme (light/dark)
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {
@@ -128,11 +120,7 @@ class _SignupFormWidgetState extends State<SignupFormWidget> {
             });
           },
         ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(UIConstants.radiusM),
-        ),
-        filled: true,
-        fillColor: AppColors.backgroundWhite,
+  // Inherit borders/fill from AppTheme InputDecorationTheme (light/dark)
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {
@@ -165,11 +153,7 @@ class _SignupFormWidgetState extends State<SignupFormWidget> {
             });
           },
         ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(UIConstants.radiusM),
-        ),
-        filled: true,
-        fillColor: AppColors.backgroundWhite,
+  // Inherit borders/fill from AppTheme InputDecorationTheme (light/dark)
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {

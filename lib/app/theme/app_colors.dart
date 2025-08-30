@@ -19,12 +19,18 @@ class AppColors {
   static const Color backgroundLight = Color(0xFFF8F9FA);
   static const Color backgroundWhite = Colors.white;
   static const Color backgroundGray = Color(0xFFE5E5E5);
+  // Dark palette tokens
+  static const Color backgroundDark = Color(0xFF111315);
+  static const Color surfaceDark = Color(0xFF1A1C1E);
+  static const Color borderDark = Color(0xFF2B2E31);
 
   // Text colors
   static const Color textPrimary = Color(0xFF2D5A27);
   static const Color textSecondary = Color(0xFF666666);
   static const Color textTertiary = Color(0xFF999999);
   static const Color textLight = Colors.white;
+  static const Color textOnDark = Color(0xFFE6E8E6);
+  static const Color textMutedOnDark = Color(0xFF8B938C);
 
   // Status colors
   static const Color success = Color(0xFF4CAF50);
@@ -32,6 +38,8 @@ class AppColors {
   static const Color warning = Color(0xFFFF9800);
   static const Color info = Color(0xFF2196F3);
   static const Color disabled = Color(0xFFBDBDBD);
+  static const Color errorContainerDark = Color(0xFF2B1F21);
+  static const Color onErrorContainerDark = Color(0xFFFFB4AB);
 
   // Sensor specific colors
   static const Color humidity = Color(0xFF4CAF50);

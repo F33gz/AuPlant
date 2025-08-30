@@ -58,11 +58,7 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
       decoration: InputDecoration(
         labelText: 'Correo electrónico',
         prefixIcon: const Icon(Icons.email_outlined),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(UIConstants.radiusM),
-        ),
-        filled: true,
-        fillColor: AppColors.backgroundWhite,
+  // Inherit borders/fill from AppTheme InputDecorationTheme (light/dark)
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {
@@ -95,11 +91,7 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
             });
           },
         ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(UIConstants.radiusM),
-        ),
-        filled: true,
-        fillColor: AppColors.backgroundWhite,
+  // Inherit borders/fill from AppTheme InputDecorationTheme (light/dark)
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {

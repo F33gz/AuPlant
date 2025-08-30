@@ -16,12 +16,13 @@ class PlantDangerZone extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.backgroundWhite,
+    color: isDark ? AppColors.surfaceDark : AppColors.backgroundWhite,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+    border: Border.all(color: isDark ? AppColors.borderDark : Colors.red.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,7 +50,7 @@ class PlantDangerZone extends StatelessWidget {
             'Una vez eliminada la planta, no podrás recuperarla. Esta acción no se puede deshacer.',
             style: TextStyle(
               fontSize: 14,
-              color: AppColors.textSecondary,
+        color: isDark ? AppColors.textMutedOnDark : AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: 16),
@@ -72,14 +73,36 @@ class PlantDangerZone extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('¿Eliminar planta?'),
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? AppColors.surfaceDark
+            : null,
+        title: Text(
+          '¿Eliminar planta?',
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.textOnDark
+                : null,
+          ),
+        ),
         content: Text(
           '¿Estás seguro de que quieres eliminar "$plantName"? Esta acción no se puede deshacer.',
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.textMutedOnDark
+                : null,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
+            child: Text(
+              'Cancelar',
+              style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.textOnDark
+                    : null,
+              ),
+            ),
           ),
           ElevatedButton(
             onPressed: () {

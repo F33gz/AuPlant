@@ -22,13 +22,14 @@ class _SignupPageState extends State<SignupPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back, color: isDark ? AppColors.textOnDark : AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -43,7 +44,7 @@ class _SignupPageState extends State<SignupPage> {
               Text(
                 'Crear cuenta',
                 style: AppTextStyles.headlineLarge.copyWith(
-                  color: AppColors.textPrimary,
+                  color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: UIConstants.spacingXL),

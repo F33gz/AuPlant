@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'theme/app_theme.dart';
 import 'routes/route_generator.dart';
 import 'routes/app_routes.dart';
+import 'theme/theme_controller.dart';
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
@@ -14,19 +15,26 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'AuPlant IoT',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      initialRoute: AppRoutes.root,
-      onGenerateRoute: RouteGenerator.generateRoute,
-      navigatorObservers: [routeObserver],
-      builder: (context, child) {
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(
-            textScaler: const TextScaler.linear(1.0), // Prevent text scaling
-          ),
-          child: child!,
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: ThemeController.instance.mode,
+      builder: (context, themeMode, _) {
+        return MaterialApp(
+          title: 'AuPlant IoT',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: themeMode,
+          initialRoute: AppRoutes.root,
+          onGenerateRoute: RouteGenerator.generateRoute,
+          navigatorObservers: [routeObserver],
+          builder: (context, child) {
+            return MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                textScaler: const TextScaler.linear(1.0), // Prevent text scaling
+              ),
+              child: child!,
+            );
+          },
         );
       },
     );

@@ -4,6 +4,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../shared/constants/ui_constants.dart';
 import '../../../../app/routes/app_routes.dart';
+import '../../../../shared/widgets/theme_mode_selector.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -50,19 +51,21 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     final user = Supabase.instance.client.auth.currentUser;
     
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           'Perfil',
           style: AppTextStyles.headlineMedium.copyWith(
-            color: AppColors.textPrimary,
+            color: cs.onSurface,
             fontWeight: FontWeight.w600,
           ),
         ),
-        backgroundColor: Colors.transparent,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         centerTitle: true,
       ),
@@ -133,6 +136,36 @@ class ProfilePage extends StatelessWidget {
     return Column(
       children: [
         _buildOptionTile(
+          context: context,
+          icon: Icons.palette_outlined,
+          title: 'Apariencia',
+          onTap: () {
+            showModalBottomSheet(
+              context: context,
+              showDragHandle: true,
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              ),
+              builder: (_) => Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text('Modo de tema', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                    SizedBox(height: 12),
+                    ThemeModeSelector(),
+                    SizedBox(height: 8),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: UIConstants.spacingM),
+        _buildOptionTile(
+          context: context,
           icon: Icons.person_outline,
           title: 'Editar Perfil',
           onTap: () {
@@ -146,6 +179,7 @@ class ProfilePage extends StatelessWidget {
         const SizedBox(height: UIConstants.spacingM),
         
         _buildOptionTile(
+          context: context,
           icon: Icons.notifications_outlined,
           title: 'Notificaciones',
           onTap: () {
@@ -159,6 +193,7 @@ class ProfilePage extends StatelessWidget {
         const SizedBox(height: UIConstants.spacingM),
         
         _buildOptionTile(
+          context: context,
           icon: Icons.help_outline,
           title: 'Ayuda y Soporte',
           onTap: () {
@@ -172,6 +207,7 @@ class ProfilePage extends StatelessWidget {
         const SizedBox(height: UIConstants.spacingM),
         
         _buildOptionTile(
+          context: context,
           icon: Icons.info_outline,
           title: 'Acerca de AuPlant',
           onTap: () {
@@ -183,13 +219,16 @@ class ProfilePage extends StatelessWidget {
   }
 
   Widget _buildOptionTile({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.backgroundWhite,
+        color: isDark ? const Color(0xFF1A1C1E) : AppColors.backgroundWhite,
+        border: Border.all(color: isDark ? const Color(0xFF2B2E31) : AppColors.border),
         borderRadius: BorderRadius.circular(UIConstants.radiusM),
         boxShadow: [
           BoxShadow(
@@ -207,13 +246,13 @@ class ProfilePage extends StatelessWidget {
         title: Text(
           title,
           style: AppTextStyles.bodyLarge.copyWith(
-            color: AppColors.textPrimary,
+            color: isDark ? const Color(0xFFE6E8E6) : AppColors.textPrimary,
           ),
         ),
         trailing: Icon(
           Icons.arrow_forward_ios,
           size: 16,
-          color: AppColors.textSecondary,
+          color: isDark ? const Color(0xFF8B938C) : AppColors.textSecondary,
         ),
         onTap: onTap,
       ),
@@ -221,6 +260,7 @@ class ProfilePage extends StatelessWidget {
   }
 
   Widget _buildLogoutButton(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
@@ -228,13 +268,13 @@ class ProfilePage extends StatelessWidget {
         icon: const Icon(Icons.logout),
         label: const Text('Cerrar Sesión'),
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.red.shade50,
-          foregroundColor: Colors.red,
+          backgroundColor: isDark ? const Color(0xFF2B1F21) : Colors.red.shade50,
+          foregroundColor: isDark ? const Color(0xFFFFB4AB) : Colors.red,
           elevation: 0,
           padding: const EdgeInsets.symmetric(vertical: UIConstants.paddingL),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(UIConstants.radiusM),
-            side: BorderSide(color: Colors.red.shade200),
+            side: BorderSide(color: isDark ? const Color(0xFFFFB4AB) : Colors.red.shade200),
           ),
         ),
       ),

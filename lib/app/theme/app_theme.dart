@@ -36,6 +36,30 @@ class AppTheme {
     );
   }
 
+  /// Dark theme configuration
+  static ThemeData get darkTheme {
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: _darkColorScheme,
+      textTheme: _textTheme,
+      appBarTheme: _appBarThemeDark,
+      elevatedButtonTheme: _elevatedButtonTheme,
+      outlinedButtonTheme: _outlinedButtonTheme,
+      textButtonTheme: _textButtonTheme,
+      inputDecorationTheme: _inputDecorationThemeDark,
+      cardTheme: _cardThemeDark,
+      switchTheme: _switchTheme,
+      snackBarTheme: _snackBarTheme,
+      bottomNavigationBarTheme: _bottomNavigationBarThemeDark,
+      floatingActionButtonTheme: _floatingActionButtonTheme,
+      dividerTheme: _dividerThemeDark,
+      iconTheme: _iconTheme,
+      splashColor: AppColors.primaryGreenAlpha10,
+      highlightColor: AppColors.primaryGreenAlpha10,
+      scaffoldBackgroundColor: const Color(0xFF111315),
+    );
+  }
+
   /// Light color scheme
   static ColorScheme get _lightColorScheme {
     return ColorScheme.fromSeed(
@@ -48,6 +72,22 @@ class AppTheme {
       onPrimary: AppColors.textLight,
       onSecondary: AppColors.textLight,
       onSurface: AppColors.textPrimary,
+      onError: AppColors.textLight,
+    );
+  }
+
+  /// Dark color scheme
+  static ColorScheme get _darkColorScheme {
+    return ColorScheme.fromSeed(
+      seedColor: AppColors.primaryGreen,
+      brightness: Brightness.dark,
+      primary: AppColors.primaryGreen,
+      secondary: AppColors.secondaryGreen,
+      surface: const Color(0xFF1A1C1E),
+      error: AppColors.error,
+      onPrimary: AppColors.textLight,
+      onSecondary: AppColors.textLight,
+      onSurface: const Color(0xFFE6E8E6),
       onError: AppColors.textLight,
     );
   }
@@ -87,6 +127,22 @@ class AppTheme {
         size: 24,
       ),
       systemOverlayStyle: SystemUiOverlayStyle.dark,
+    );
+  }
+
+  static AppBarTheme get _appBarThemeDark {
+    return AppBarTheme(
+      backgroundColor: const Color(0xFF1A1C1E),
+      foregroundColor: const Color(0xFFE6E8E6),
+      elevation: 0,
+      shadowColor: Colors.transparent,
+      centerTitle: false,
+      titleTextStyle: AppTextStyles.appBarTitle.copyWith(color: const Color(0xFFE6E8E6)),
+      iconTheme: const IconThemeData(
+        color: AppColors.primaryGreen,
+        size: 24,
+      ),
+      systemOverlayStyle: SystemUiOverlayStyle.light,
     );
   }
 
@@ -167,12 +223,54 @@ class AppTheme {
     );
   }
 
+  static InputDecorationTheme get _inputDecorationThemeDark {
+    return InputDecorationTheme(
+      filled: true,
+      fillColor: const Color(0xFF232528),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF2B2E31)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF2B2E31)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.error),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.error, width: 2),
+      ),
+      labelStyle: AppTextStyles.formLabel.copyWith(color: const Color(0xFFCAD0C9)),
+      hintStyle: AppTextStyles.formHelper.copyWith(color: const Color(0xFF9AA19A)),
+      errorStyle: AppTextStyles.formError,
+      contentPadding: const EdgeInsets.all(16),
+    );
+  }
+
   /// Card theme configuration
   static CardThemeData get _cardTheme {
     return CardThemeData(
       color: AppColors.backgroundWhite,
       shadowColor: AppColors.shadowLight,
       elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+    );
+  }
+
+  static CardThemeData get _cardThemeDark {
+    return CardThemeData(
+      color: const Color(0xFF1A1C1E),
+      shadowColor: Colors.black.withValues(alpha: 0.2),
+      elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -224,6 +322,18 @@ class AppTheme {
     );
   }
 
+  static BottomNavigationBarThemeData get _bottomNavigationBarThemeDark {
+    return BottomNavigationBarThemeData(
+      backgroundColor: const Color(0xFF1A1C1E),
+      selectedItemColor: AppColors.primaryGreen,
+      unselectedItemColor: const Color(0xFF8B938C),
+      selectedLabelStyle: AppTextStyles.navigationLabelSelected.copyWith(color: AppColors.primaryGreen),
+      unselectedLabelStyle: AppTextStyles.navigationLabel.copyWith(color: const Color(0xFF8B938C)),
+      type: BottomNavigationBarType.fixed,
+      elevation: 0,
+    );
+  }
+
   /// Floating action button theme configuration
   static FloatingActionButtonThemeData get _floatingActionButtonTheme {
     return FloatingActionButtonThemeData(
@@ -240,6 +350,14 @@ class AppTheme {
   static DividerThemeData get _dividerTheme {
     return const DividerThemeData(
       color: AppColors.divider,
+      thickness: 1,
+      space: 1,
+    );
+  }
+
+  static DividerThemeData get _dividerThemeDark {
+    return const DividerThemeData(
+      color: Color(0xFF2B2E31),
       thickness: 1,
       space: 1,
     );

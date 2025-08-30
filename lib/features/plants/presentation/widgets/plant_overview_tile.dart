@@ -24,11 +24,13 @@ class PlantOverviewTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     final humidityNow = currentHumidity ?? 65.0; // TODO: bind to Supabase/Blynk
     final avg = averageHumidity ?? 64.2;
 
     return Material(
-      color: AppColors.backgroundWhite,
+      color: cs.surface,
       borderRadius: BorderRadius.circular(UIConstants.radiusL),
       child: InkWell(
         onTap: onTap,
@@ -36,7 +38,7 @@ class PlantOverviewTile extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(UIConstants.radiusL),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: theme.dividerColor),
           ),
           padding: const EdgeInsets.all(UIConstants.paddingL),
           child: Column(
@@ -60,7 +62,7 @@ class PlantOverviewTile extends StatelessWidget {
                         const SizedBox(height: UIConstants.spacingXS),
                         Row(
                           children: [
-                            const Icon(Icons.circle, size: 8, color: AppColors.online),
+                            Icon(Icons.circle, size: 8, color: AppColors.online),
                             const SizedBox(width: 6),
                             Text('En línea', style: AppTextStyles.statusOnline),
                           ],
@@ -68,11 +70,11 @@ class PlantOverviewTile extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                  Icon(Icons.chevron_right, color: theme.dividerColor),
                 ],
               ),
               const SizedBox(height: UIConstants.spacingL),
-              _humidityCard(humidityNow, plant.thresholds.minHumidity),
+              _humidityCard(context, humidityNow, plant.thresholds.minHumidity),
               const SizedBox(height: UIConstants.spacingS),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -101,7 +103,9 @@ class PlantOverviewTile extends StatelessWidget {
     );
   }
 
-  Widget _humidityCard(double current, double thresholdMin) {
+  Widget _humidityCard(BuildContext context, double current, double thresholdMin) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     final isGood = current >= thresholdMin;
     return Container(
       width: double.infinity,
@@ -110,12 +114,14 @@ class PlantOverviewTile extends StatelessWidget {
         horizontal: UIConstants.paddingL,
       ),
       decoration: BoxDecoration(
-        color: AppColors.humidityBackground,
+    color: theme.brightness == Brightness.dark
+      ? cs.primary.withValues(alpha: 0.08)
+            : AppColors.humidityBackground,
         borderRadius: BorderRadius.circular(UIConstants.radiusM),
       ),
       child: Row(
         children: [
-          const Icon(Icons.water_drop, color: AppColors.humidity),
+          Icon(Icons.water_drop, color: cs.primary),
           const SizedBox(width: UIConstants.spacingM),
           Expanded(
             child: Text('Humedad', style: AppTextStyles.labelMedium),
@@ -123,7 +129,7 @@ class PlantOverviewTile extends StatelessWidget {
           Text(
             '${current.toStringAsFixed(1)}%',
             style: AppTextStyles.titleSmall.copyWith(
-              color: isGood ? AppColors.success : AppColors.error,
+              color: isGood ? AppColors.success : cs.error,
               fontWeight: FontWeight.w700,
             ),
           ),

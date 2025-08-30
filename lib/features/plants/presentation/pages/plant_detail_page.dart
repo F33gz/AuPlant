@@ -30,10 +30,10 @@ class _PlantDetailPageState extends State<PlantDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(
         slivers: [
-          _buildSliverHeader(),
+          _buildSliverHeader(context),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -100,12 +100,14 @@ class _PlantDetailPageState extends State<PlantDetailPage> {
     );
   }
 
-  SliverAppBar _buildSliverHeader() {
+  SliverAppBar _buildSliverHeader(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final scaffold = Theme.of(context).scaffoldBackgroundColor;
     return SliverAppBar(
       pinned: true,
       expandedHeight: 180,
-      backgroundColor: AppColors.backgroundWhite,
-      iconTheme: const IconThemeData(color: AppColors.textPrimary),
+      backgroundColor: cs.surface,
+      iconTheme: IconThemeData(color: cs.onSurface),
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: const EdgeInsetsDirectional.only(start: 56, bottom: 12, end: 16),
         title: Row(
@@ -122,7 +124,10 @@ class _PlantDetailPageState extends State<PlantDetailPage> {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [AppColors.primaryGreenAlpha10, AppColors.backgroundWhite],
+              colors: [
+                cs.primary.withValues(alpha: 0.10),
+                scaffold,
+              ],
             ),
           ),
           child: Center(child: Text(widget.plant.emoji, style: const TextStyle(fontSize: 80))),

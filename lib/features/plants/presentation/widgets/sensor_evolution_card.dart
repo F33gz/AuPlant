@@ -27,13 +27,15 @@ class _SensorEvolutionCardState extends State<SensorEvolutionCard> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.backgroundWhite,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(UIConstants.radiusXL),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: theme.dividerColor),
         boxShadow: [
-          BoxShadow(color: AppColors.shadowLight, blurRadius: 6, offset: const Offset(0, 2)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 2)),
         ],
       ),
       padding: const EdgeInsets.all(UIConstants.paddingL),
@@ -42,7 +44,7 @@ class _SensorEvolutionCardState extends State<SensorEvolutionCard> {
         children: [
           Row(
             children: [
-              const Icon(Icons.trending_up, color: AppColors.primaryGreen),
+              Icon(Icons.trending_up, color: cs.primary),
               const SizedBox(width: UIConstants.spacingS),
               Text('Evolución de Sensores', style: AppTextStyles.titleSmall),
             ],
@@ -52,9 +54,9 @@ class _SensorEvolutionCardState extends State<SensorEvolutionCard> {
           const SizedBox(height: UIConstants.spacingL),
           Row(
             children: [
-              _chip('Humedad', icon: Icons.water_drop, selected: _selected == 0, onTap: () => setState(() => _selected = 0)),
+              _chip(context, 'Humedad', icon: Icons.water_drop, selected: _selected == 0, onTap: () => setState(() => _selected = 0)),
               const SizedBox(width: UIConstants.spacingS),
-              _chip('Luz', icon: Icons.light_mode, selected: _selected == 1, onTap: () => setState(() => _selected = 1)),
+              _chip(context, 'Luz', icon: Icons.light_mode, selected: _selected == 1, onTap: () => setState(() => _selected = 1)),
             ],
           ),
         ],
@@ -62,21 +64,22 @@ class _SensorEvolutionCardState extends State<SensorEvolutionCard> {
     );
   }
 
-  Widget _chip(String label, {required IconData icon, required bool selected, required VoidCallback onTap}) {
+  Widget _chip(BuildContext context, String label, {required IconData icon, required bool selected, required VoidCallback onTap}) {
+    final cs = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primaryGreen : Colors.transparent,
+          color: selected ? cs.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.primaryGreen),
+          border: Border.all(color: cs.primary),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 16, color: selected ? Colors.white : AppColors.primaryGreen),
+            Icon(icon, size: 16, color: selected ? cs.onPrimary : cs.primary),
             const SizedBox(width: 6),
-            Text(label, style: selected ? AppTextStyles.buttonSmall : AppTextStyles.labelSmall.copyWith(color: AppColors.primaryGreen)),
+            Text(label, style: selected ? AppTextStyles.buttonSmall : AppTextStyles.labelSmall.copyWith(color: cs.primary)),
           ],
         ),
       ),
@@ -164,7 +167,7 @@ class _ChartPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final grid = Paint()
-      ..color = AppColors.border
+      ..color = const Color(0xFF2B2E31)
       ..strokeWidth = 1;
 
     final padX = leftGutter; // reserve space for Y labels

@@ -24,12 +24,13 @@ class PlantThresholdSettings extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.backgroundWhite,
+    color: isDark ? AppColors.surfaceDark : AppColors.backgroundWhite,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.border),
+    border: Border.all(color: isDark ? AppColors.borderDark : AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -39,7 +40,7 @@ class PlantThresholdSettings extends StatelessWidget {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+        color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 16),
@@ -105,7 +106,9 @@ class PlantThresholdSettings extends StatelessWidget {
               title,
               style: TextStyle(
                 fontSize: 14,
-                color: AppColors.textSecondary,
+        color: Theme.of(context).brightness == Brightness.dark
+          ? AppColors.textMutedOnDark
+          : AppColors.textSecondary,
               ),
             ),
             const Spacer(),

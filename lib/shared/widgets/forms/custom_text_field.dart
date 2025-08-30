@@ -28,6 +28,7 @@ class CustomTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -37,7 +38,7 @@ class CustomTextField extends StatelessWidget {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
@@ -48,18 +49,20 @@ class CustomTextField extends StatelessWidget {
           maxLines: maxLines,
           keyboardType: keyboardType,
           obscureText: obscureText,
+          style: TextStyle(color: isDark ? AppColors.textOnDark : AppColors.textPrimary),
           decoration: InputDecoration(
             hintText: hintText,
+            hintStyle: TextStyle(color: isDark ? AppColors.textMutedOnDark : AppColors.textSecondary),
             suffixIcon: suffixIcon,
             filled: true,
-            fillColor: AppColors.backgroundWhite,
+            fillColor: isDark ? AppColors.surfaceDark : AppColors.backgroundWhite,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: isDark ? AppColors.borderDark : AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: isDark ? AppColors.borderDark : AppColors.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),

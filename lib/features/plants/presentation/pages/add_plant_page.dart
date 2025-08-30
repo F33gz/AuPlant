@@ -59,25 +59,27 @@ class _AddPlantPageState extends State<AddPlantPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
       appBar: _buildAppBar(),
       body: _buildBody(),
     );
   }
 
   PreferredSizeWidget _buildAppBar() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return AppBar(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
       elevation: 0,
       leading: IconButton(
-        icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
+        icon: Icon(Icons.arrow_back, color: isDark ? AppColors.textOnDark : AppColors.textPrimary),
         onPressed: () => Navigator.pop(context),
       ),
       title: Text(
         'Agregar Nueva Planta',
         style: TextStyle(
-          color: AppColors.textPrimary,
+          color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
           fontSize: 20,
           fontWeight: FontWeight.w600,
         ),
@@ -167,12 +169,13 @@ class _AddPlantPageState extends State<AddPlantPage> {
   }
 
   Widget _buildDeviceField() {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
     return CustomTextField(
       controller: _deviceIdController,
       label: 'Dispositivo IoT',
       hintText: 'Ingresa el ID del dispositivo o escanea el código QR',
       suffixIcon: IconButton(
-        icon: Icon(Icons.qr_code_scanner, color: AppColors.textSecondary),
+    icon: Icon(Icons.qr_code_scanner, color: isDark ? AppColors.textMutedOnDark : AppColors.textSecondary),
         onPressed: () {
           // TODO: Implement QR code scanner
         },

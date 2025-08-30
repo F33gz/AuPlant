@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../shared/constants/ui_constants.dart';
 
@@ -12,12 +11,13 @@ class SettingsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+  final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.backgroundWhite,
+    color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(UIConstants.radiusXL),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [BoxShadow(color: AppColors.shadowLight, blurRadius: 6, offset: const Offset(0, 2))],
+    border: Border.all(color: theme.dividerColor),
+  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 2))],
       ),
       padding: const EdgeInsets.all(UIConstants.paddingL),
       child: Column(

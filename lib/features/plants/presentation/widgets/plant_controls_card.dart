@@ -34,13 +34,15 @@ class _PlantControlsCardState extends State<PlantControlsCard> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.backgroundWhite,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(UIConstants.radiusXL),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: theme.dividerColor),
         boxShadow: [
-          BoxShadow(color: AppColors.shadowLight, blurRadius: 6, offset: const Offset(0, 2)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 2)),
         ],
       ),
       padding: const EdgeInsets.all(UIConstants.paddingL),
@@ -63,6 +65,7 @@ class _PlantControlsCardState extends State<PlantControlsCard> {
   }
 
   Widget _waterButton() {
+  final cs = Theme.of(context).colorScheme;
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
@@ -70,8 +73,8 @@ class _PlantControlsCardState extends State<PlantControlsCard> {
         icon: const Icon(Icons.water_drop),
         label: const Text('Regar'),
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primaryGreen,
-          foregroundColor: Colors.white,
+      backgroundColor: cs.primary,
+      foregroundColor: cs.onPrimary,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 2,
@@ -81,16 +84,18 @@ class _PlantControlsCardState extends State<PlantControlsCard> {
   }
 
   Widget _autoModeRow() {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     return Container(
       padding: const EdgeInsets.all(UIConstants.paddingL),
       decoration: BoxDecoration(
-        color: AppColors.backgroundLight,
+        color: theme.scaffoldBackgroundColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Row(
         children: [
-          const Icon(Icons.auto_mode, color: AppColors.primaryGreen),
+          Icon(Icons.auto_mode, color: cs.primary),
           const SizedBox(width: UIConstants.spacingM),
           Expanded(
             child: Column(
@@ -103,7 +108,7 @@ class _PlantControlsCardState extends State<PlantControlsCard> {
           ),
           Switch(
             value: _auto,
-            activeThumbColor: AppColors.primaryGreen,
+            activeThumbColor: cs.primary,
             activeTrackColor: AppColors.primaryGreenAlpha30,
             onChanged: (v) {
               setState(() => _auto = v);
@@ -116,8 +121,10 @@ class _PlantControlsCardState extends State<PlantControlsCard> {
   }
 
   Widget _settingsButton() {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     return Material(
-      color: AppColors.backgroundWhite,
+      color: cs.surface,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: widget.onOpenSettings,
@@ -127,9 +134,9 @@ class _PlantControlsCardState extends State<PlantControlsCard> {
           height: 44,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.primaryGreen),
+            border: Border.all(color: cs.primary),
           ),
-          child: const Icon(Icons.settings, color: AppColors.primaryGreen),
+          child: Icon(Icons.settings, color: cs.primary),
         ),
       ),
     );

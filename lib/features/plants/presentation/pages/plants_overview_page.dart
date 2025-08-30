@@ -61,7 +61,7 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
   appBar: _buildAppBar(),
   body: _buildBody(),
       floatingActionButton: _buildFloatingActionButton(),
@@ -70,13 +70,15 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
 
   /// Builds the app bar with title and actions
   PreferredSizeWidget _buildAppBar() {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     return AppBar(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: theme.scaffoldBackgroundColor,
       elevation: 0,
       title: Text(
         'AuPlant',
         style: AppTextStyles.titleLarge.copyWith(
-          color: AppColors.primaryGreen,
+          color: cs.primary,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -84,7 +86,7 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
         IconButton(
           icon: Icon(
             Icons.notifications_outlined,
-            color: AppColors.textSecondary,
+            color: theme.dividerColor,
           ),
           onPressed: () {
             // TODO: Navigate to notifications
@@ -97,6 +99,7 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
 
   /// Builds the main body content
   Widget _buildBody() {
+  final cs = Theme.of(context).colorScheme;
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -109,13 +112,13 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
             Icon(
               Icons.error_outline,
               size: 48,
-              color: AppColors.error,
+              color: cs.error,
             ),
             const SizedBox(height: UIConstants.spacingM),
             Text(
               _error!,
               style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.error,
+                color: cs.error,
               ),
               textAlign: TextAlign.center,
             ),
@@ -135,7 +138,7 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
 
     return RefreshIndicator(
       onRefresh: _loadPlants,
-      color: AppColors.primaryGreen,
+      color: cs.primary,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: Padding(

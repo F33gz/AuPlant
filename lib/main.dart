@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/di/dependency_injection.dart';
 import 'app/app.dart';
+import 'app/theme/theme_controller.dart';
 
 /// Updated main.dart with dependency injection
 /// 
@@ -18,6 +19,9 @@ void main() async {
     url: 'https://wkzkzjwzxsvkflxclbqu.supabase.co',
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indremt6and6eHN2a2ZseGNsYnF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE5MzQ1OTgsImV4cCI6MjA2NzUxMDU5OH0.fQpLDNX31CStY_eCUIqabpr7sfm004At8JbZTf1o1k0',
   );
+
+  // Load theme preference
+  await ThemeController.instance.load();
   
   runApp(const AuPlantRoot());
 }

@@ -31,13 +31,15 @@ class RealTimeMetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.backgroundWhite,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(UIConstants.radiusXL),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: theme.dividerColor),
         boxShadow: [
-          BoxShadow(color: AppColors.shadowLight, blurRadius: 6, offset: const Offset(0, 2)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 2)),
         ],
       ),
       padding: const EdgeInsets.all(UIConstants.paddingL),
@@ -46,7 +48,7 @@ class RealTimeMetricCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              _iconBadge(icon),
+              _iconBadge(context, icon),
               const SizedBox(width: UIConstants.spacingS),
               Text(title, style: AppTextStyles.titleSmall),
               const Spacer(),
@@ -55,7 +57,7 @@ class RealTimeMetricCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: UIConstants.spacingL),
-          Text(value, style: AppTextStyles.displaySmall.copyWith(color: AppColors.textPrimary)),
+          Text(value, style: AppTextStyles.displaySmall.copyWith(color: cs.onSurface)),
           const SizedBox(height: UIConstants.spacingXS),
           Text(statusLabel, style: AppTextStyles.labelMedium.copyWith(color: statusColor)),
           if (rangeText != null) ...[
@@ -64,27 +66,29 @@ class RealTimeMetricCard extends StatelessWidget {
           ],
           if (minText != null || avgText != null || maxText != null) ...[
             const SizedBox(height: UIConstants.spacingL),
-            _footerStats(minText, avgText, maxText),
+            _footerStats(context, minText, avgText, maxText),
           ],
         ],
       ),
     );
   }
 
-  Widget _iconBadge(IconData d) {
+  Widget _iconBadge(BuildContext context, IconData d) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: AppColors.primaryGreenAlpha10,
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Icon(d, color: AppColors.primaryGreen),
+      child: Icon(d, color: cs.primary),
     );
   }
 
-  Widget _footerStats(String? min, String? avg, String? max) {
+  Widget _footerStats(BuildContext context, String? min, String? avg, String? max) {
     TextStyle label = AppTextStyles.caption;
-    TextStyle val = AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600);
+    final cs = Theme.of(context).colorScheme;
+    TextStyle val = AppTextStyles.bodySmall.copyWith(color: cs.onSurface, fontWeight: FontWeight.w600);
 
     Widget cell(String labelText, String? v) => Expanded(
           child: Column(
@@ -98,16 +102,16 @@ class RealTimeMetricCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.backgroundLight,
+        color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.circular(UIConstants.radiusM),
       ),
       padding: const EdgeInsets.symmetric(vertical: UIConstants.paddingM),
       child: Row(
         children: [
           cell('Min', min),
-          Container(width: 1, height: 28, color: AppColors.border),
+          Container(width: 1, height: 28, color: Theme.of(context).dividerColor),
           cell('Prom', avg),
-          Container(width: 1, height: 28, color: AppColors.border),
+          Container(width: 1, height: 28, color: Theme.of(context).dividerColor),
           cell('Máx', max),
         ],
       ),

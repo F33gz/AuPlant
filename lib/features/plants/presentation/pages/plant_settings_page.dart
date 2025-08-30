@@ -71,25 +71,27 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
       appBar: _buildAppBar(),
       body: _buildBody(),
     );
   }
 
   PreferredSizeWidget _buildAppBar() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return AppBar(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
       elevation: 0,
       leading: IconButton(
-        icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
+        icon: Icon(Icons.arrow_back, color: isDark ? AppColors.textOnDark : AppColors.textPrimary),
         onPressed: () => Navigator.of(context).pop(),
       ),
       title: Text(
         'Ajustes de Planta',
         style: TextStyle(
-          color: AppColors.textPrimary,
+          color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
           fontSize: 20,
           fontWeight: FontWeight.w600,
         ),

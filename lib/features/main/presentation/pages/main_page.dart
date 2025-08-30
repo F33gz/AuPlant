@@ -33,11 +33,12 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       body: _pages[_selectedIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: AppColors.backgroundWhite,
+      color: isDark ? const Color(0xFF1A1C1E) : AppColors.backgroundWhite,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.1),
@@ -79,6 +80,7 @@ class _MainPageState extends State<MainPage> {
     required int index,
   }) {
     final isSelected = _selectedIndex == index;
+  final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return GestureDetector(
       onTap: () => _onItemTapped(index),
@@ -89,7 +91,7 @@ class _MainPageState extends State<MainPage> {
         ),
         decoration: BoxDecoration(
           color: isSelected 
-              ? AppColors.primaryGreen.withValues(alpha: 0.1)
+        ? (isDark ? const Color(0xFF2D5A27).withValues(alpha: 0.12) : AppColors.primaryGreen.withValues(alpha: 0.1))
               : Colors.transparent,
           borderRadius: BorderRadius.circular(UIConstants.radiusXL),
         ),
@@ -99,8 +101,8 @@ class _MainPageState extends State<MainPage> {
             Icon(
               icon,
               color: isSelected 
-                  ? AppColors.primaryGreen 
-                  : AppColors.textSecondary,
+          ? AppColors.primaryGreen 
+          : (isDark ? const Color(0xFF8B938C) : AppColors.textSecondary),
               size: 24,
             ),
             if (isSelected) ...[
@@ -108,7 +110,7 @@ class _MainPageState extends State<MainPage> {
               Text(
                 label,
                 style: AppTextStyles.labelMedium.copyWith(
-                  color: AppColors.primaryGreen,
+          color: AppColors.primaryGreen,
                   fontWeight: FontWeight.w600,
                 ),
               ),

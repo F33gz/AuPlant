@@ -18,6 +18,7 @@ class PlantEmojiSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -26,16 +27,16 @@ class PlantEmojiSelector extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+      color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.backgroundWhite,
+      color: isDark ? AppColors.surfaceDark : AppColors.backgroundWhite,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.border),
+      border: Border.all(color: isDark ? AppColors.borderDark : AppColors.border),
           ),
           child: LayoutBuilder(
             builder: (context, constraints) {
