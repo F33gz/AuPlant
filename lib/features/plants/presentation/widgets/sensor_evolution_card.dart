@@ -52,9 +52,9 @@ class _SensorEvolutionCardState extends State<SensorEvolutionCard> {
           const SizedBox(height: UIConstants.spacingL),
           Row(
             children: [
-              _chip('Humedad', selected: _selected == 0, onTap: () => setState(() => _selected = 0)),
+              _chip('Humedad', icon: Icons.water_drop, selected: _selected == 0, onTap: () => setState(() => _selected = 0)),
               const SizedBox(width: UIConstants.spacingS),
-              _chip('Luz', selected: _selected == 1, onTap: () => setState(() => _selected = 1)),
+              _chip('Luz', icon: Icons.light_mode, selected: _selected == 1, onTap: () => setState(() => _selected = 1)),
             ],
           ),
         ],
@@ -62,7 +62,7 @@ class _SensorEvolutionCardState extends State<SensorEvolutionCard> {
     );
   }
 
-  Widget _chip(String label, {required bool selected, required VoidCallback onTap}) {
+  Widget _chip(String label, {required IconData icon, required bool selected, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -74,7 +74,7 @@ class _SensorEvolutionCardState extends State<SensorEvolutionCard> {
         ),
         child: Row(
           children: [
-            Icon(selected ? Icons.water_drop : Icons.light_mode, size: 16, color: selected ? Colors.white : AppColors.primaryGreen),
+            Icon(icon, size: 16, color: selected ? Colors.white : AppColors.primaryGreen),
             const SizedBox(width: 6),
             Text(label, style: selected ? AppTextStyles.buttonSmall : AppTextStyles.labelSmall.copyWith(color: AppColors.primaryGreen)),
           ],
