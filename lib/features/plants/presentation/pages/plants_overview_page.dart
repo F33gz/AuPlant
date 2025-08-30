@@ -5,7 +5,8 @@ import '../../../../app/theme/app_text_styles.dart';
 import '../../../../shared/constants/ui_constants.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../shared/widgets/empty_state_widget.dart';
-import '../widgets/plant_card.dart';
+import '../widgets/overview_stat_card.dart';
+import '../widgets/plant_overview_tile.dart';
 import '../../domain/entities/plant.dart';
 import '../../domain/usecases/get_plants_usecase.dart';
 
@@ -61,8 +62,8 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
-      appBar: _buildAppBar(),
-      body: _buildBody(),
+  appBar: _buildAppBar(),
+  body: _buildBody(),
       floatingActionButton: _buildFloatingActionButton(),
     );
   }
@@ -135,30 +136,77 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
     return RefreshIndicator(
       onRefresh: _loadPlants,
       color: AppColors.primaryGreen,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: _buildPlantGrid(_plants),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildStatsRow(),
+              const SizedBox(height: UIConstants.spacingL),
+              _buildMyPlantsSection(),
+              const SizedBox(height: UIConstants.spacingM),
+              _buildPlantList(),
+              const SizedBox(height: UIConstants.spacingXXXL),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-    // Plant grid builder
-  Widget _buildPlantGrid(List<Plant> plants) {
-    return GridView.builder(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.85,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-      ),
-      itemCount: plants.length,
-      itemBuilder: (context, index) {
-        return PlantCard(
-          plant: plants[index],
-          onTap: () => _navigateToPlantDetail(plants[index]),
+  // Build plant list with spacing between tiles for better UX
+  Widget _buildPlantList() {
+    return Column(
+      children: List.generate(_plants.length, (index) {
+        final p = _plants[index];
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: index == _plants.length - 1 ? 0 : UIConstants.spacingL,
+          ),
+          child: PlantOverviewTile(
+            plant: p,
+            onTap: () => _navigateToPlantDetail(p),
+          ),
         );
-      },
+      }),
     );
+  }
+
+  Widget _buildStatsRow() {
+    final connected = _plants.where((_) => true).length; // placeholder
+    return Row(
+      children: [
+        Expanded(
+          child: OverviewStatCard(
+            icon: Icons.eco,
+            title: 'Total',
+            value: _plants.length.toString(),
+          ),
+        ),
+        const SizedBox(width: UIConstants.spacingL),
+        Expanded(
+          child: OverviewStatCard(
+            icon: Icons.wifi,
+            title: 'Conectadas',
+            value: '$connected/${_plants.length}',
+          ),
+        ),
+        const SizedBox(width: UIConstants.spacingL),
+        const Expanded(
+          child: OverviewStatCard(
+            icon: Icons.warning_amber_outlined,
+            title: 'Alertas',
+            value: '0',
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMyPlantsSection() {
+    return Text('Mis Plantas (${_plants.length})', style: AppTextStyles.titleLarge);
   }
 
   Widget _buildEmptyState() {
