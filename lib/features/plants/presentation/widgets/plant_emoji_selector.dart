@@ -37,42 +37,62 @@ class PlantEmojiSelector extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: AppColors.border),
           ),
-          child: GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 8,
-              childAspectRatio: 1,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-            ),
-            itemCount: plantEmojis.length,
-            itemBuilder: (context, index) {
-              final emoji = plantEmojis[index];
-              final isSelected = emoji == selectedEmoji;
-              
-              return GestureDetector(
-                onTap: () => onEmojiSelected(emoji),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: isSelected 
-                        ? AppColors.primaryGreenAlpha10 
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: isSelected 
-                          ? AppColors.primaryGreen 
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // Responsive, gapless layout using Wrap so the last row doesn't leave a big blank tail.
+              const double itemSize = 44; // square tile
+              const double minSpacing = 8; // minimum spacing between tiles
+
+              // Calculate columns that fit while keeping at least the minimum spacing
+              final int columns =
+                  (constraints.maxWidth / (itemSize + minSpacing))
+                      .floor()
+                      .clamp(1, plantEmojis.length);
+
+              // Distribute any extra space as additional spacing to avoid large blanks
+              final double remaining =
+                  constraints.maxWidth - (columns * itemSize);
+              final double spacing =
+                  columns > 1 ? remaining / (columns - 1) : 0;
+
+              return Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                runAlignment: WrapAlignment.start,
+                spacing: spacing < minSpacing ? minSpacing : spacing,
+                runSpacing: 12,
+                children: plantEmojis.map((emoji) {
+                  final isSelected = emoji == selectedEmoji;
+                  return SizedBox(
+                    width: itemSize,
+                    height: itemSize,
+                    child: Material(
+                      color: isSelected
+                          ? AppColors.primaryGreenAlpha10
                           : Colors.transparent,
-                      width: 2,
+                      borderRadius: BorderRadius.circular(6),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(6),
+                        onTap: () => onEmojiSelected(emoji),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: isSelected
+                                  ? AppColors.primaryGreen
+                                  : Colors.transparent,
+                              width: 2,
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            emoji,
+                            style: const TextStyle(fontSize: 20),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      emoji,
-                      style: const TextStyle(fontSize: 20),
-                    ),
-                  ),
-                ),
+                  );
+                }).toList(),
               );
             },
           ),

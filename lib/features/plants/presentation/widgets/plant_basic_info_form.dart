@@ -9,35 +9,35 @@ class PlantBasicInfoForm extends StatelessWidget {
   final TextEditingController nameController;
   final TextEditingController locationController;
   final Function(String) onChanged;
+  // When embedding inside another section/card, hide the inner header and container.
+  final bool showTitle;
+  final bool useContainer;
 
   const PlantBasicInfoForm({
     super.key,
     required this.nameController,
     required this.locationController,
     required this.onChanged,
+    this.showTitle = true,
+    this.useContainer = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundWhite,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
+    final content = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Información básica',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+          if (showTitle) ...[
+            Text(
+              'Información básica',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
+          ],
           CustomTextField(
             controller: nameController,
             label: 'Nombre de la planta',
@@ -56,7 +56,18 @@ class PlantBasicInfoForm extends StatelessWidget {
             hintText: 'e.g., Jardín, Invernadero, Sala de estar',
           ),
         ],
+      );
+
+    if (!useContainer) return content;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundWhite,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.border),
       ),
+      child: content,
     );
   }
 }

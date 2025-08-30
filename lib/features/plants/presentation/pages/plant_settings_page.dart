@@ -9,6 +9,7 @@ import '../widgets/plant_danger_zone.dart';
 import '../../domain/entities/plant.dart';
 import '../../domain/usecases/update_plant_usecase.dart';
 import '../../domain/usecases/delete_plant_usecase.dart';
+import '../widgets/settings_section.dart';
 
 class PlantSettingsPage extends StatefulWidget {
   final Plant plant;
@@ -86,7 +87,7 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
         onPressed: () => Navigator.of(context).pop(),
       ),
       title: Text(
-        'Configuración de Planta',
+        'Ajustes de Planta',
         style: TextStyle(
           color: AppColors.textPrimary,
           fontSize: 20,
@@ -121,50 +122,65 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          PlantBasicInfoForm(
-            nameController: _nameController,
-            locationController: _locationController,
-            onChanged: (_) => _markAsChanged(),
+          SettingsSection(
+            title: 'Información Básica',
+            child: PlantBasicInfoForm(
+              nameController: _nameController,
+              locationController: _locationController,
+              onChanged: (_) => _markAsChanged(),
+              showTitle: false,
+              useContainer: false,
+            ),
           ),
           const SizedBox(height: 24),
-          PlantEmojiSelector(
-            selectedEmoji: _selectedEmoji,
-            plantEmojis: _plantEmojis,
-            onEmojiSelected: (emoji) {
-              setState(() {
-                _selectedEmoji = emoji;
-                _markAsChanged();
-              });
-            },
+          SettingsSection(
+            title: 'Icono de la Planta',
+            child: PlantEmojiSelector(
+              selectedEmoji: _selectedEmoji,
+              plantEmojis: _plantEmojis,
+              onEmojiSelected: (emoji) {
+                setState(() {
+                  _selectedEmoji = emoji;
+                  _markAsChanged();
+                });
+              },
+            ),
           ),
           const SizedBox(height: 24),
-          PlantThresholdSettings(
-            minHumidity: _minHumidity,
-            minLight: _minLight,
-            maxLight: _maxLight,
-            onMinHumidityChanged: (value) {
-              setState(() {
-                _minHumidity = value;
-                _markAsChanged();
-              });
-            },
-            onMinLightChanged: (value) {
-              setState(() {
-                _minLight = value;
-                _markAsChanged();
-              });
-            },
-            onMaxLightChanged: (value) {
-              setState(() {
-                _maxLight = value;
-                _markAsChanged();
-              });
-            },
+          SettingsSection(
+            title: 'Umbrales de Sensores',
+            subtitle: 'Configura los límites mínimos y máximos para automatización y alertas.',
+            child: PlantThresholdSettings(
+              minHumidity: _minHumidity,
+              minLight: _minLight,
+              maxLight: _maxLight,
+              onMinHumidityChanged: (value) {
+                setState(() {
+                  _minHumidity = value;
+                  _markAsChanged();
+                });
+              },
+              onMinLightChanged: (value) {
+                setState(() {
+                  _minLight = value;
+                  _markAsChanged();
+                });
+              },
+              onMaxLightChanged: (value) {
+                setState(() {
+                  _maxLight = value;
+                  _markAsChanged();
+                });
+              },
+            ),
           ),
           const SizedBox(height: 24),
-          PlantDangerZone(
-            onDelete: _deletePlant,
-            plantName: widget.plant.name,
+          SettingsSection(
+            title: 'Zona de Peligro',
+            child: PlantDangerZone(
+              onDelete: _deletePlant,
+              plantName: widget.plant.name,
+            ),
           ),
           const SizedBox(height: 24),
         ],
