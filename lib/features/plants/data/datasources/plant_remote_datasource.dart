@@ -83,6 +83,11 @@ class PlantRemoteDataSourceImpl implements PlantRemoteDataSource {
             'device_id': deviceId,
             'ubicacion': location,
             'user_id': session.user.id,
+            // optional defaults can be set at DB level; if needed set here
+            // 'min_humedad': 30,
+            // 'max_humedad': 70,
+            // 'min_luz': 200,
+            // 'max_luz': 800,
           })
           .select()
           .single();

@@ -31,6 +31,23 @@ class PlantDto {
   });
 
   factory PlantDto.fromJson(Map<String, dynamic> json) {
+    double? _asDouble(dynamic v) {
+      if (v == null) return null;
+      if (v is num) return v.toDouble();
+      if (v is String) return double.tryParse(v);
+      return null;
+    }
+
+    double? _readDouble(List<String> keys) {
+      for (final k in keys) {
+        if (json.containsKey(k) && json[k] != null) {
+          final v = _asDouble(json[k]);
+          if (v != null) return v;
+        }
+      }
+      return null;
+    }
+
     return PlantDto(
       id: json['id'] as String,
       nombre: json['nombre'] as String,
@@ -38,10 +55,11 @@ class PlantDto {
       descripcion: json['descripcion'] as String?,
       ubicacion: json['ubicacion'] as String?,
       deviceId: json['device_id'] as String?,
-      humidityThresholdMin: (json['humidity_threshold_min'] as num?)?.toDouble(),
-      humidityThresholdMax: (json['humidity_threshold_max'] as num?)?.toDouble(),
-      lightThresholdMin: (json['light_threshold_min'] as num?)?.toDouble(),
-      lightThresholdMax: (json['light_threshold_max'] as num?)?.toDouble(),
+      // Prefer Supabase column names; fallback to old keys if any
+      humidityThresholdMin: _readDouble(['min_humedad', 'humidity_threshold_min']),
+      humidityThresholdMax: _readDouble(['max_humedad', 'humidity_threshold_max']),
+      lightThresholdMin: _readDouble(['min_luz', 'light_threshold_min']),
+      lightThresholdMax: _readDouble(['max_luz', 'light_threshold_max']),
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
@@ -55,10 +73,11 @@ class PlantDto {
       'descripcion': descripcion,
       'ubicacion': ubicacion,
       'device_id': deviceId,
-      'humidity_threshold_min': humidityThresholdMin,
-      'humidity_threshold_max': humidityThresholdMax,
-      'light_threshold_min': lightThresholdMin,
-      'light_threshold_max': lightThresholdMax,
+  // Use DB column names when persisting
+  'min_humedad': humidityThresholdMin,
+  'max_humedad': humidityThresholdMax,
+  'min_luz': lightThresholdMin,
+  'max_luz': lightThresholdMax,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
