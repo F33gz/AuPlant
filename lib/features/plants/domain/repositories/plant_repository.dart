@@ -26,7 +26,11 @@ abstract class PlantRepository {
     String? emoji,
     String? description,
     String? deviceId,
-    String? location,
+  String? location,
+  double? minHumidity,
+  double? maxHumidity,
+  double? minLight,
+  double? maxLight,
   });
   
   /// Delete a plant

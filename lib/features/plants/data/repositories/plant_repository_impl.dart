@@ -85,7 +85,11 @@ class PlantRepositoryImpl implements PlantRepository {
     String? emoji,
     String? description,
     String? deviceId,
-    String? location,
+  String? location,
+  double? minHumidity,
+  double? maxHumidity,
+  double? minLight,
+  double? maxLight,
   }) async {
     try {
       final plantDto = await plantRemoteDataSource.updatePlant(
@@ -94,7 +98,11 @@ class PlantRepositoryImpl implements PlantRepository {
         emoji: emoji,
         description: description,
         deviceId: deviceId,
-        location: location,
+    location: location,
+    minHumidity: minHumidity,
+    maxHumidity: maxHumidity,
+    minLight: minLight,
+    maxLight: maxLight,
       );
       return Success(plantDto.toEntity());
     } on ServerException catch (e) {

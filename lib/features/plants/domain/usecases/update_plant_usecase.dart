@@ -14,6 +14,10 @@ class UpdatePlantUseCase {
     String? description,
     String? deviceId,
     String? location,
+    double? minHumidity,
+    double? maxHumidity,
+    double? minLight,
+    double? maxLight,
   }) async {
     return await repository.updatePlant(
       plantId: plantId,
@@ -22,6 +26,10 @@ class UpdatePlantUseCase {
       description: description,
       deviceId: deviceId,
       location: location,
+      minHumidity: minHumidity,
+      maxHumidity: maxHumidity,
+      minLight: minLight,
+      maxLight: maxLight,
     );
   }
 }

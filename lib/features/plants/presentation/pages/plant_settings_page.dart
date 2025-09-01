@@ -201,6 +201,9 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
         emoji: _selectedEmoji,
         location: _locationController.text.trim(),
         deviceId: widget.plant.deviceId,
+  minHumidity: _minHumidity,
+  minLight: _minLight,
+  maxLight: _maxLight,
       );
       
       switch (result) {

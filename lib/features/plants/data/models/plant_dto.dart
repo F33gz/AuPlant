@@ -31,17 +31,17 @@ class PlantDto {
   });
 
   factory PlantDto.fromJson(Map<String, dynamic> json) {
-    double? _asDouble(dynamic v) {
+    double? asDoubleLocal(dynamic v) {
       if (v == null) return null;
       if (v is num) return v.toDouble();
       if (v is String) return double.tryParse(v);
       return null;
     }
 
-    double? _readDouble(List<String> keys) {
+    double? readDoubleLocal(List<String> keys) {
       for (final k in keys) {
         if (json.containsKey(k) && json[k] != null) {
-          final v = _asDouble(json[k]);
+          final v = asDoubleLocal(json[k]);
           if (v != null) return v;
         }
       }
@@ -56,10 +56,10 @@ class PlantDto {
       ubicacion: json['ubicacion'] as String?,
       deviceId: json['device_id'] as String?,
       // Prefer Supabase column names; fallback to old keys if any
-      humidityThresholdMin: _readDouble(['min_humedad', 'humidity_threshold_min']),
-      humidityThresholdMax: _readDouble(['max_humedad', 'humidity_threshold_max']),
-      lightThresholdMin: _readDouble(['min_luz', 'light_threshold_min']),
-      lightThresholdMax: _readDouble(['max_luz', 'light_threshold_max']),
+  humidityThresholdMin: readDoubleLocal(['min_humedad', 'humidity_threshold_min']),
+  humidityThresholdMax: readDoubleLocal(['max_humedad', 'humidity_threshold_max']),
+  lightThresholdMin: readDoubleLocal(['min_luz', 'light_threshold_min']),
+  lightThresholdMax: readDoubleLocal(['max_luz', 'light_threshold_max']),
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );

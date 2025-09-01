@@ -19,7 +19,11 @@ abstract class PlantRemoteDataSource {
     String? emoji,
     String? description,
     String? deviceId,
-    String? location,
+  String? location,
+  double? minHumidity,
+  double? maxHumidity,
+  double? minLight,
+  double? maxLight,
   });
   Future<void> deletePlant(String plantId);
   Stream<List<PlantDto>> watchUserPlants();
@@ -105,7 +109,11 @@ class PlantRemoteDataSourceImpl implements PlantRemoteDataSource {
     String? emoji,
     String? description,
     String? deviceId,
-    String? location,
+  String? location,
+  double? minHumidity,
+  double? maxHumidity,
+  double? minLight,
+  double? maxLight,
   }) async {
     try {
       final session = supabaseClient.auth.currentSession;
@@ -119,6 +127,10 @@ class PlantRemoteDataSourceImpl implements PlantRemoteDataSource {
       if (description != null) updateData['descripcion'] = description;
       if (deviceId != null) updateData['device_id'] = deviceId;
       if (location != null) updateData['ubicacion'] = location;
+  if (minHumidity != null) updateData['min_humedad'] = minHumidity;
+  if (maxHumidity != null) updateData['max_humedad'] = maxHumidity;
+  if (minLight != null) updateData['min_luz'] = minLight;
+  if (maxLight != null) updateData['max_luz'] = maxLight;
 
       final response = await supabaseClient.functions.invoke(
         'modify_plant',
