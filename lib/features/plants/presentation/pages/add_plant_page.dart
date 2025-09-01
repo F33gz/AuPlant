@@ -28,10 +28,6 @@ class _AddPlantPageState extends State<AddPlantPage> {
   String _selectedEmoji = '🌱';
   bool _isLoading = false;
 
-  final List<String> _plantEmojis = [
-    '🌱', '🌿', '🌾', '🌵', '🌳', '🌲', '🌴', 
-    '🌸', '🌼', '🌹', '💐', '🌻', '🌺', '🌷'
-  ];
 
   final List<String> _plantTypes = [
     'Vegetable Garden',
@@ -131,7 +127,6 @@ class _AddPlantPageState extends State<AddPlantPage> {
   Widget _buildEmojiSelector() {
     return PlantEmojiSelector(
       selectedEmoji: _selectedEmoji,
-      plantEmojis: _plantEmojis,
       onEmojiSelected: (emoji) {
         setState(() {
           _selectedEmoji = emoji;

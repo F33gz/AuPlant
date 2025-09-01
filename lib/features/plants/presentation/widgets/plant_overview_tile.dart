@@ -11,15 +11,12 @@ class PlantOverviewTile extends StatelessWidget {
 
   /// Placeholder current humidity, to be wired to live data later
   final double? currentHumidity;
-  /// Placeholder average humidity
-  final double? averageHumidity;
 
   const PlantOverviewTile({
     super.key,
     required this.plant,
     this.onTap,
     this.currentHumidity,
-    this.averageHumidity,
   });
 
   @override
@@ -27,7 +24,6 @@ class PlantOverviewTile extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final humidityNow = currentHumidity ?? 65.0; // TODO: bind to Supabase/Blynk
-    final avg = averageHumidity ?? 64.2;
 
     return Material(
       color: cs.surface,
@@ -80,7 +76,6 @@ class PlantOverviewTile extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('Umbral: ${plant.thresholds.minHumidity.toStringAsFixed(0)}%', style: AppTextStyles.caption),
-                  Text('Prom: ${avg.toStringAsFixed(1)}%', style: AppTextStyles.caption),
                 ],
               ),
             ],
