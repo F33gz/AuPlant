@@ -8,7 +8,6 @@ class Plant extends Equatable {
   final String description;
   final String? location;
   final String? deviceId;
-  final String? accessToken;
   final PlantThresholds thresholds;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -19,8 +18,7 @@ class Plant extends Equatable {
     required this.emoji,
     required this.description,
     this.location,
-    this.deviceId,
-    this.accessToken,
+  this.deviceId,
     required this.thresholds,
     required this.createdAt,
     required this.updatedAt,
@@ -33,7 +31,6 @@ class Plant extends Equatable {
     String? description,
     String? location,
     String? deviceId,
-    String? accessToken,
     PlantThresholds? thresholds,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -45,7 +42,6 @@ class Plant extends Equatable {
       description: description ?? this.description,
       location: location ?? this.location,
       deviceId: deviceId ?? this.deviceId,
-      accessToken: accessToken ?? this.accessToken,
       thresholds: thresholds ?? this.thresholds,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -60,7 +56,6 @@ class Plant extends Equatable {
         description,
         location,
         deviceId,
-        accessToken,
         thresholds,
         createdAt,
         updatedAt,

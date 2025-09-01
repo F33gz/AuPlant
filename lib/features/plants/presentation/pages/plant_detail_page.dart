@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
+import '../../../../core/network/blynk_api.dart';
 import '../../domain/entities/plant.dart';
 import '../widgets/real_time_metric_card.dart';
 import '../widgets/sensor_evolution_card.dart';
@@ -23,9 +24,53 @@ class PlantDetailPage extends StatefulWidget {
 }
 
 class _PlantDetailPageState extends State<PlantDetailPage> {
-  // TODO: bind to Supabase/Blynk real-time values
-  final double _currentHumidity = 65.0;
-  final double _avgHumidity = 64.3;
+  final _api = BlynkApi();
+  double? _humidity;
+  double? _light;
+  double? _avgHumidity; // from simple rolling calc
+  bool _watering = false;
+  late final String _plantId;
+  DateTime? _lastUpdate;
+  late final ValueNotifier<int> _tick;
+
+  @override
+  void initState() {
+    super.initState();
+    _plantId = widget.plant.id;
+    _tick = ValueNotifier<int>(0);
+    _fetchLive();
+    // light polling every 10s; simple approach without streams
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startPolling();
+    });
+  }
+
+  void _startPolling() async {
+    if (!mounted) return;
+    Future.doWhile(() async {
+      await Future.delayed(const Duration(seconds: 10));
+      if (!mounted) return false;
+      await _fetchLive();
+      _tick.value++;
+      return mounted;
+    });
+  }
+
+  Future<void> _fetchLive() async {
+    try {
+      final live = await _api.getLive(_plantId);
+      setState(() {
+        _humidity = live.humidityPercent ?? live.humidityRaw;
+        _light = live.lightPercent ?? live.lightRaw;
+        _lastUpdate = DateTime.now();
+        _avgHumidity = _avgHumidity == null
+            ? _humidity
+            : ((_avgHumidity! * 3 + (_humidity ?? _avgHumidity!)) / 4);
+      });
+    } catch (_) {
+      // ignore for now; UI will show N/A
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,23 +93,23 @@ class _PlantDetailPageState extends State<PlantDetailPage> {
                         child: RealTimeMetricCard(
                           icon: Icons.water_drop,
                           title: 'Humedad',
-                          value: '${_currentHumidity.toStringAsFixed(1)}%',
-                          statusLabel: 'Óptimo',
-                          statusColor: AppColors.success,
+                          value: _humidity == null ? 'N/A' : '${_humidity!.toStringAsFixed(1)}%',
+                          statusLabel: _statusLabelFor(_humidity, widget.plant.thresholds.minHumidity, widget.plant.thresholds.maxHumidity),
+                          statusColor: _statusColorFor(_humidity, widget.plant.thresholds.minHumidity, widget.plant.thresholds.maxHumidity),
                           rangeText: 'Rango: ${widget.plant.thresholds.minHumidity.toStringAsFixed(0)}-${widget.plant.thresholds.maxHumidity.toStringAsFixed(0)}%',
                           minText: widget.plant.thresholds.minHumidity.toStringAsFixed(1),
-                          avgText: _avgHumidity.toStringAsFixed(1),
+                          avgText: (_avgHumidity ?? _humidity ?? 0).toStringAsFixed(1),
                           maxText: widget.plant.thresholds.maxHumidity.toStringAsFixed(1),
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Expanded(
+                      Expanded(
                         child: RealTimeMetricCard(
                           icon: Icons.light_mode,
                           title: 'Luz',
-                          value: 'N/A',
-                          statusLabel: 'Sin datos',
-                          statusColor: AppColors.warning,
+                          value: _light == null ? 'N/A' : '${_light!.toStringAsFixed(0)}',
+                          statusLabel: _statusLabelFor(_light, widget.plant.thresholds.minLight, widget.plant.thresholds.maxLight),
+                          statusColor: _statusColorFor(_light, widget.plant.thresholds.minLight, widget.plant.thresholds.maxLight),
                           showStatusDot: true,
                         ),
                       ),
@@ -74,13 +119,13 @@ class _PlantDetailPageState extends State<PlantDetailPage> {
                   const SizedBox(height: 24),
                   Text('Evolución de Sensores', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
-                  const SensorEvolutionCard(),
+                  SensorEvolutionCard(plantId: widget.plant.id),
 
                   const SizedBox(height: 24),
                   Text('Controles', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   PlantControlsCard(
-                    isOnline: true, // TODO: derive from device status
+                    isOnline: _lastUpdate != null && DateTime.now().difference(_lastUpdate!).inSeconds < 30,
                     initialAutoMode: false, // TODO: bind to plant state
                     onWaterNow: _onWaterNow,
                     onAutoModeChanged: (v) => _onToggleAuto(v),
@@ -161,11 +206,23 @@ class _PlantDetailPageState extends State<PlantDetailPage> {
     );
   }
 
-  void _onWaterNow() {
-    // TODO: trigger device action via Blynk/Supabase functions
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Regando ${widget.plant.name}...'), backgroundColor: AppColors.success),
-    );
+  Future<void> _onWaterNow() async {
+    if (_watering) return;
+    setState(() => _watering = true);
+    try {
+      await _api.controlPump(plantId: _plantId, on: true);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Regando ${widget.plant.name}...'), backgroundColor: AppColors.success),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al regar: $e'), backgroundColor: AppColors.error),
+      );
+    } finally {
+      if (mounted) setState(() => _watering = false);
+    }
   }
 
   void _onToggleAuto(bool value) {
@@ -173,5 +230,19 @@ class _PlantDetailPageState extends State<PlantDetailPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Modo automático ${value ? 'activado' : 'desactivado'}'), backgroundColor: AppColors.success),
     );
+  }
+
+  String _statusLabelFor(double? v, double min, double max) {
+    if (v == null) return 'Sin datos';
+    if (v < min) return 'Bajo';
+    if (v > max) return 'Alto';
+    return 'Óptimo';
+  }
+
+  Color _statusColorFor(double? v, double min, double max) {
+    if (v == null) return AppColors.warning;
+    if (v < min) return AppColors.info;
+    if (v > max) return AppColors.error;
+    return AppColors.success;
   }
 }

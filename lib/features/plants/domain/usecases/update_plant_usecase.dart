@@ -14,7 +14,6 @@ class UpdatePlantUseCase {
     String? description,
     String? deviceId,
     String? location,
-    String? accessToken,
   }) async {
     return await repository.updatePlant(
       plantId: plantId,
@@ -23,7 +22,6 @@ class UpdatePlantUseCase {
       description: description,
       deviceId: deviceId,
       location: location,
-      accessToken: accessToken,
     );
   }
 }

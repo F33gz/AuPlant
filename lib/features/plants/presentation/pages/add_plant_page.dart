@@ -21,7 +21,6 @@ class _AddPlantPageState extends State<AddPlantPage> {
   final _nameController = TextEditingController();
   final _locationController = TextEditingController();
   final _deviceIdController = TextEditingController();
-  final _accessTokenController = TextEditingController();
   final _descriptionController = TextEditingController();
   final AddPlantUseCase _addPlantUseCase = GetIt.instance<AddPlantUseCase>();
   
@@ -48,7 +47,6 @@ class _AddPlantPageState extends State<AddPlantPage> {
     _nameController.dispose();
     _locationController.dispose();
     _deviceIdController.dispose();
-    _accessTokenController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
@@ -100,8 +98,6 @@ class _AddPlantPageState extends State<AddPlantPage> {
             _buildLocationField(),
             const SizedBox(height: 24),
             _buildDeviceField(),
-            const SizedBox(height: 16),
-            _buildAccessTokenField(),
             const SizedBox(height: 24),
             _buildActionButtons(),
           ],
@@ -184,19 +180,7 @@ class _AddPlantPageState extends State<AddPlantPage> {
     );
   }
 
-  Widget _buildAccessTokenField() {
-    return CustomTextField(
-      controller: _accessTokenController,
-      label: 'Token de acceso',
-      hintText: 'Ingresa el token de acceso',
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Por favor ingresa un token de acceso';
-        }
-        return null;
-      },
-    );
-  }
+  // Removed access token field; deviceId is used as Blynk token
 
   Widget _buildActionButtons() {
     return Row(

@@ -15,7 +15,6 @@ class SensorDataDto {
   final SensorStatisticsDto? humidityStatistics;
   final SensorStatisticsDto? lightStatistics;
   final String? error;
-  final String? accessToken;
 
   const SensorDataDto({
     required this.plantId,
@@ -31,7 +30,6 @@ class SensorDataDto {
     this.humidityStatistics,
     this.lightStatistics,
     this.error,
-    this.accessToken,
   });
 
   factory SensorDataDto.fromJson(Map<String, dynamic> json) {
@@ -49,7 +47,6 @@ class SensorDataDto {
       humidityStatistics: _parseStatistics(json, 'statistics', 'humidity'),
       lightStatistics: _parseStatistics(json, 'statistics', 'light'),
       error: json['error']?.toString(),
-      accessToken: json['access_token'] as String?,
     );
   }
 

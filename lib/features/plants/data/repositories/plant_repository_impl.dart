@@ -57,7 +57,6 @@ class PlantRepositoryImpl implements PlantRepository {
     String? emoji,
     String? description,
     String? location,
-    String? accessToken,
   }) async {
     try {
       final plantDto = await plantRemoteDataSource.addPlant(
@@ -66,7 +65,6 @@ class PlantRepositoryImpl implements PlantRepository {
         emoji: emoji,
         description: description,
         location: location,
-        accessToken: accessToken,
       );
       return Success(plantDto.toEntity());
     } on ServerException catch (e) {
@@ -88,7 +86,6 @@ class PlantRepositoryImpl implements PlantRepository {
     String? description,
     String? deviceId,
     String? location,
-    String? accessToken,
   }) async {
     try {
       final plantDto = await plantRemoteDataSource.updatePlant(
@@ -98,7 +95,6 @@ class PlantRepositoryImpl implements PlantRepository {
         description: description,
         deviceId: deviceId,
         location: location,
-        accessToken: accessToken,
       );
       return Success(plantDto.toEntity());
     } on ServerException catch (e) {
@@ -165,12 +161,12 @@ class PlantRepositoryImpl implements PlantRepository {
 
   @override
   Future<Result<void>> sendWateringCommand({
-    required String accessToken,
+    required String plantId,
     required Map<String, dynamic> attributes,
   }) async {
     try {
       await sensorRemoteDataSource.sendWateringCommand(
-        accessToken: accessToken,
+        plantId: plantId,
         attributes: attributes,
       );
       return const Success(null);

@@ -12,7 +12,6 @@ abstract class PlantRemoteDataSource {
     String? emoji,
     String? description,
     String? location,
-    String? accessToken,
   });
   Future<PlantDto> updatePlant({
     required String plantId,
@@ -21,7 +20,6 @@ abstract class PlantRemoteDataSource {
     String? description,
     String? deviceId,
     String? location,
-    String? accessToken,
   });
   Future<void> deletePlant(String plantId);
   Stream<List<PlantDto>> watchUserPlants();
@@ -69,7 +67,6 @@ class PlantRemoteDataSourceImpl implements PlantRemoteDataSource {
     String? emoji,
     String? description,
     String? location,
-    String? accessToken,
   }) async {
     try {
       final session = supabaseClient.auth.currentSession;
@@ -86,7 +83,6 @@ class PlantRemoteDataSourceImpl implements PlantRemoteDataSource {
             'device_id': deviceId,
             'ubicacion': location,
             'user_id': session.user.id,
-            'access_token': accessToken,
           })
           .select()
           .single();
@@ -105,7 +101,6 @@ class PlantRemoteDataSourceImpl implements PlantRemoteDataSource {
     String? description,
     String? deviceId,
     String? location,
-    String? accessToken,
   }) async {
     try {
       final session = supabaseClient.auth.currentSession;
@@ -119,7 +114,6 @@ class PlantRemoteDataSourceImpl implements PlantRemoteDataSource {
       if (description != null) updateData['descripcion'] = description;
       if (deviceId != null) updateData['device_id'] = deviceId;
       if (location != null) updateData['ubicacion'] = location;
-      if (accessToken != null) updateData['access_token'] = accessToken;
 
       final response = await supabaseClient.functions.invoke(
         'modify_plant',

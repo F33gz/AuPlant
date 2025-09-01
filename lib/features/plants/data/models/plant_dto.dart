@@ -8,7 +8,6 @@ class PlantDto {
   final String? descripcion;
   final String? ubicacion;
   final String? deviceId;
-  final String? accessToken;
   final double? humidityThresholdMin;
   final double? humidityThresholdMax;
   final double? lightThresholdMin;
@@ -23,7 +22,6 @@ class PlantDto {
     this.descripcion,
     this.ubicacion,
     this.deviceId,
-    this.accessToken,
     this.humidityThresholdMin,
     this.humidityThresholdMax,
     this.lightThresholdMin,
@@ -40,7 +38,6 @@ class PlantDto {
       descripcion: json['descripcion'] as String?,
       ubicacion: json['ubicacion'] as String?,
       deviceId: json['device_id'] as String?,
-      accessToken: json['access_token'] as String?,
       humidityThresholdMin: (json['humidity_threshold_min'] as num?)?.toDouble(),
       humidityThresholdMax: (json['humidity_threshold_max'] as num?)?.toDouble(),
       lightThresholdMin: (json['light_threshold_min'] as num?)?.toDouble(),
@@ -58,7 +55,6 @@ class PlantDto {
       'descripcion': descripcion,
       'ubicacion': ubicacion,
       'device_id': deviceId,
-      'access_token': accessToken,
       'humidity_threshold_min': humidityThresholdMin,
       'humidity_threshold_max': humidityThresholdMax,
       'light_threshold_min': lightThresholdMin,
@@ -77,7 +73,6 @@ class PlantDto {
       description: descripcion ?? '',
       location: ubicacion,
       deviceId: deviceId,
-      accessToken: accessToken,
       thresholds: PlantThresholds(
         minHumidity: humidityThresholdMin ?? 30.0,
         maxHumidity: humidityThresholdMax ?? 70.0,
@@ -98,7 +93,6 @@ class PlantDto {
       descripcion: plant.description,
       ubicacion: plant.location,
       deviceId: plant.deviceId,
-      accessToken: plant.accessToken,
       humidityThresholdMin: plant.thresholds.minHumidity,
       humidityThresholdMax: plant.thresholds.maxHumidity,
       lightThresholdMin: plant.thresholds.minLight,

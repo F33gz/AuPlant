@@ -9,7 +9,6 @@ class AddPlantForm extends StatelessWidget {
   final TextEditingController nameController;
   final TextEditingController locationController;
   final TextEditingController deviceIdController;
-  final TextEditingController accessTokenController;
   final TextEditingController descriptionController;
   final String selectedEmoji;
   final String selectedPlantType;
@@ -39,7 +38,6 @@ class AddPlantForm extends StatelessWidget {
     required this.nameController,
     required this.locationController,
     required this.deviceIdController,
-    required this.accessTokenController,
     required this.descriptionController,
     required this.selectedEmoji,
     required this.selectedPlantType,
@@ -98,14 +96,7 @@ class AddPlantForm extends StatelessWidget {
           ),
           SizedBox(height: 16),
           
-          PlantFormField(
-            label: 'Token de acceso',
-            hintText: 'Ingresa el token de acceso',
-            controller: accessTokenController,
-            validator: FormValidators.validateAccessToken,
-            obscureText: true,
-          ),
-          SizedBox(height: 24),
+          // Access token removed; deviceId serves as Blynk token
           
           PlantFormField(
             label: 'Descripción (opcional)',
