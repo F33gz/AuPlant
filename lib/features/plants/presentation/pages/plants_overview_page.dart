@@ -9,6 +9,7 @@ import '../widgets/overview_stat_card.dart';
 import '../widgets/plant_overview_tile.dart';
 import '../../domain/entities/plant.dart';
 import '../../domain/usecases/get_plants_usecase.dart';
+import '../../../../core/network/blynk_api.dart';
 
 /// Plants Overview Page
 /// 
@@ -23,10 +24,12 @@ class PlantsOverviewPage extends StatefulWidget {
 
 class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
   final GetPlantsUseCase _getPlantsUseCase = GetIt.instance<GetPlantsUseCase>();
+  final _blynkApi = BlynkApi();
   
   List<Plant> _plants = [];
   bool _isLoading = true;
   String? _error;
+  final Map<String, double> _liveHumidityByPlant = {};
 
   @override
   void initState() {
@@ -48,6 +51,7 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
           _plants = success.data;
           _isLoading = false;
         });
+        _loadLiveForPlants();
         break;
       case Error<List<Plant>> error:
         setState(() {
@@ -55,6 +59,24 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
           _isLoading = false;
         });
         break;
+    }
+  }
+
+  Future<void> _loadLiveForPlants() async {
+    // Fetch live humidity for each plant; best-effort, no blocking UI
+    for (final p in _plants) {
+      try {
+        final live = await _blynkApi.getLive(p.id);
+        final value = live.humidityPercent ?? live.humidityRaw;
+        if (!mounted) return;
+        if (value != null) {
+          setState(() {
+            _liveHumidityByPlant[p.id] = value;
+          });
+        }
+      } catch (_) {
+        // ignore per-plant failures
+      }
     }
   }
 
@@ -170,6 +192,7 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
           ),
           child: PlantOverviewTile(
             plant: p,
+            currentHumidity: _liveHumidityByPlant[p.id],
             onTap: () => _navigateToPlantDetail(p),
           ),
         );
