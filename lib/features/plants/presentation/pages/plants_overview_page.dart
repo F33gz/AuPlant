@@ -261,7 +261,11 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
       context,
       '/plant-detail',
       arguments: plant,
-    );
+    ).then((result) {
+      if (result == 'deleted') {
+        _loadPlants();
+      }
+    });
   }
 
   void _navigateToAddPlant() {

@@ -129,10 +129,16 @@ class _PlantDetailPageState extends State<PlantDetailPage> {
                     initialAutoMode: false, // TODO: bind to plant state
                     onWaterNow: _onWaterNow,
                     onAutoModeChanged: (v) => _onToggleAuto(v),
-                    onOpenSettings: () => Navigator.of(context).pushNamed(
-                      AppRoutes.plantSettings,
-                      arguments: widget.plant,
-                    ),
+                    onOpenSettings: () async {
+                      final result = await Navigator.of(context).pushNamed(
+                        AppRoutes.plantSettings,
+                        arguments: widget.plant,
+                      );
+                      if (!mounted) return;
+                      if (result == 'deleted') {
+                        Navigator.of(context).pop('deleted');
+                      }
+                    },
                   ),
 
                   const SizedBox(height: 24),
