@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../shared/constants/ui_constants.dart';
@@ -30,6 +31,7 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
   bool _isLoading = true;
   String? _error;
   final Map<String, double> _liveHumidityByPlant = {};
+  int? _connectedCount;
 
   @override
   void initState() {
@@ -51,6 +53,8 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
           _plants = success.data;
           _isLoading = false;
         });
+  // Kick off connected count and live humidity loads (best-effort)
+  _loadConnectedCount();
         _loadLiveForPlants();
         break;
       case Error<List<Plant>> error:
@@ -77,6 +81,21 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
       } catch (_) {
         // ignore per-plant failures
       }
+    }
+  }
+
+  Future<void> _loadConnectedCount() async {
+    try {
+      final res = await Supabase.instance.client.functions.invoke('get_plant_data');
+      final data = (res.data as Map?)?.cast<String, dynamic>();
+      final plantas = (data?['plantas'] as List?) ?? const [];
+      final count = plantas.where((e) => e is Map && (e['online'] == true)).length;
+      if (!mounted) return;
+      setState(() {
+        _connectedCount = count;
+      });
+    } catch (_) {
+      // ignore errors; leave count null
     }
   }
 
@@ -201,7 +220,7 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
   }
 
   Widget _buildStatsRow() {
-    final connected = _plants.where((_) => true).length; // placeholder
+  final connected = _connectedCount ?? 0;
     return Row(
       children: [
         Expanded(
