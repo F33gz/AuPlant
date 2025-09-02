@@ -3,6 +3,7 @@ import '../../../../shared/widgets/forms/plant_form_field.dart';
 import '../../../../shared/widgets/forms/emoji_selector.dart';
 import '../../../../shared/widgets/forms/plant_type_dropdown.dart';
 import '../../../../shared/utils/form_validators.dart';
+import '../../../../shared/widgets/qr_scanner_page.dart';
 
 class AddPlantForm extends StatelessWidget {
   final GlobalKey<FormState> formKey;
@@ -89,8 +90,13 @@ class AddPlantForm extends StatelessWidget {
             validator: FormValidators.validateDeviceId,
             suffixIcon: IconButton(
               icon: Icon(Icons.qr_code_scanner),
-              onPressed: () {
-                // QR code scanner functionality
+              onPressed: () async {
+                final scanned = await Navigator.of(context).push<String>(
+                  MaterialPageRoute(builder: (_) => const QrScannerPage()),
+                );
+                if (scanned != null && scanned.isNotEmpty) {
+                  deviceIdController.text = scanned.trim();
+                }
               },
             ),
           ),

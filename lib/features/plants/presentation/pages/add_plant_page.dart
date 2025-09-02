@@ -5,6 +5,7 @@ import '../../../../core/utils/result.dart';
 import '../../../../shared/widgets/forms/custom_text_field.dart';
 import '../../../../shared/widgets/forms/custom_dropdown.dart';
 import '../../../../shared/widgets/buttons/action_buttons.dart';
+import '../../../../shared/widgets/qr_scanner_page.dart';
 import '../widgets/plant_emoji_selector.dart';
 import '../../domain/entities/plant.dart';
 import '../../domain/usecases/add_plant_usecase.dart';
@@ -167,8 +168,13 @@ class _AddPlantPageState extends State<AddPlantPage> {
       hintText: 'Ingresa el ID del dispositivo o escanea el código QR',
       suffixIcon: IconButton(
     icon: Icon(Icons.qr_code_scanner, color: isDark ? AppColors.textMutedOnDark : AppColors.textSecondary),
-        onPressed: () {
-          // TODO: Implement QR code scanner
+        onPressed: () async {
+          final scanned = await Navigator.of(context).push<String>(
+            MaterialPageRoute(builder: (_) => const QrScannerPage()),
+          );
+          if (scanned != null && scanned.isNotEmpty) {
+            _deviceIdController.text = scanned.trim();
+          }
         },
       ),
       validator: (value) {
