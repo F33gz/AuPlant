@@ -32,6 +32,7 @@ class _PlantDetailPageState extends State<PlantDetailPage> {
   late final String _plantId;
   DateTime? _lastUpdate;
   late final ValueNotifier<int> _tick;
+  bool? _online;
 
   @override
   void initState() {
@@ -63,6 +64,7 @@ class _PlantDetailPageState extends State<PlantDetailPage> {
         _humidity = live.humidityPercent ?? live.humidityRaw;
         _light = live.lightPercent ?? live.lightRaw;
         _lastUpdate = DateTime.now();
+  _online = live.online;
         _avgHumidity = _avgHumidity == null
             ? _humidity
             : ((_avgHumidity! * 3 + (_humidity ?? _avgHumidity!)) / 4);
@@ -107,7 +109,7 @@ class _PlantDetailPageState extends State<PlantDetailPage> {
                         child: RealTimeMetricCard(
                           icon: Icons.light_mode,
                           title: 'Luz',
-                          value: _light == null ? 'N/A' : '${_light!.toStringAsFixed(0)}',
+                          value: _light == null ? 'N/A' : _light!.toStringAsFixed(0),
                           statusLabel: _statusLabelFor(_light, widget.plant.thresholds.minLight, widget.plant.thresholds.maxLight),
                           statusColor: _statusColorFor(_light, widget.plant.thresholds.minLight, widget.plant.thresholds.maxLight),
                           showStatusDot: true,
@@ -134,7 +136,7 @@ class _PlantDetailPageState extends State<PlantDetailPage> {
                         AppRoutes.plantSettings,
                         arguments: widget.plant,
                       );
-                      if (!mounted) return;
+                      if (!context.mounted) return;
                       if (result == 'deleted') {
                         Navigator.of(context).pop('deleted');
                       }
@@ -187,7 +189,7 @@ class _PlantDetailPageState extends State<PlantDetailPage> {
       actions: [
         Padding(
           padding: const EdgeInsets.only(right: 16, top: 8),
-          child: _onlinePill(true), // TODO: bind online/offline
+          child: _onlinePill(_online ?? true),
         ),
       ],
     );
@@ -216,13 +218,13 @@ class _PlantDetailPageState extends State<PlantDetailPage> {
     if (_watering) return;
     setState(() => _watering = true);
     try {
-      await _api.controlPump(plantId: _plantId, on: true);
-      if (!mounted) return;
+  await _api.controlPump(plantId: _plantId, on: true);
+  if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Regando ${widget.plant.name}...'), backgroundColor: AppColors.success),
       );
     } catch (e) {
-      if (!mounted) return;
+  if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al regar: $e'), backgroundColor: AppColors.error),
       );

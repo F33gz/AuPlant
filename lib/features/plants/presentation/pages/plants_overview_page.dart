@@ -32,6 +32,7 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
   String? _error;
   final Map<String, double> _liveHumidityByPlant = {};
   int? _connectedCount;
+  final Map<String, bool> _onlineByPlant = {};
 
   @override
   void initState() {
@@ -73,11 +74,15 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
         final live = await _blynkApi.getLive(p.id);
         final value = live.humidityPercent ?? live.humidityRaw;
         if (!mounted) return;
-        if (value != null) {
-          setState(() {
+        setState(() {
+          if (value != null) {
             _liveHumidityByPlant[p.id] = value;
-          });
-        }
+          }
+          if (live.online != null) {
+            _onlineByPlant[p.id] = live.online!;
+            _connectedCount = _onlineByPlant.values.where((v) => v == true).length;
+          }
+        });
       } catch (_) {
         // ignore per-plant failures
       }
@@ -86,13 +91,37 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
 
   Future<void> _loadConnectedCount() async {
     try {
-      final res = await Supabase.instance.client.functions.invoke('get_plant_data');
+      final client = Supabase.instance.client;
+      final session = client.auth.currentSession;
+      if (session == null) {
+        // Not logged in; cannot get protected function
+        return;
+      }
+      final res = await client.functions.invoke(
+        'get_plant_data',
+        headers: {
+          'Authorization': 'Bearer ${session.accessToken}',
+          'Content-Type': 'application/json',
+        },
+      );
       final data = (res.data as Map?)?.cast<String, dynamic>();
       final plantas = (data?['plantas'] as List?) ?? const [];
-      final count = plantas.where((e) => e is Map && (e['online'] == true)).length;
+      int count = 0;
+      final Map<String, bool> onlineById = {};
+      for (final e in plantas) {
+        if (e is Map) {
+          final id = e['id']?.toString();
+          final isOnline = e['online'] == true;
+          if (id != null) onlineById[id] = isOnline;
+          if (isOnline) count++;
+        }
+      }
       if (!mounted) return;
       setState(() {
         _connectedCount = count;
+        _onlineByPlant
+          ..clear()
+          ..addAll(onlineById);
       });
     } catch (_) {
       // ignore errors; leave count null
@@ -212,6 +241,7 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
           child: PlantOverviewTile(
             plant: p,
             currentHumidity: _liveHumidityByPlant[p.id],
+            online: _onlineByPlant[p.id],
             onTap: () => _navigateToPlantDetail(p),
           ),
         );

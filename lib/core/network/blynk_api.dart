@@ -50,8 +50,9 @@ class LiveData {
   final double? lightRaw;
   final double? humidityPercent; // Optional: normalized for UI
   final double? lightPercent; // Optional: normalized for UI
+  final bool? online; // Device connectivity
 
-  LiveData({this.humidityRaw, this.lightRaw, this.humidityPercent, this.lightPercent});
+  LiveData({this.humidityRaw, this.lightRaw, this.humidityPercent, this.lightPercent, this.online});
 
   factory LiveData.fromJson(Map<String, dynamic> json) {
     return LiveData(
@@ -59,6 +60,7 @@ class LiveData {
       lightRaw: (json['light_raw'] as num?)?.toDouble(),
       humidityPercent: (json['humidity_percent'] as num?)?.toDouble(),
       lightPercent: (json['light_percent'] as num?)?.toDouble(),
+      online: json['online'] as bool?,
     );
   }
 }
