@@ -11,6 +11,7 @@ import '../widgets/plant_overview_tile.dart';
 import '../../domain/entities/plant.dart';
 import '../../domain/usecases/get_plants_usecase.dart';
 import '../../../../core/network/blynk_api.dart';
+import '../../../../shared/utils/notifications_service.dart';
 
 /// Plants Overview Page
 /// 
@@ -113,6 +114,7 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
       for (final e in plantas) {
         if (e is Map) {
           final id = e['id']?.toString();
+          final name = (e['nombre']?.toString() ?? 'Planta');
           final isOnline = e['online'] == true;
           if (id != null) onlineById[id] = isOnline;
           if (isOnline) count++;
@@ -123,6 +125,17 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
           final minHum = minH is num ? minH.toDouble() : (minH is String ? double.tryParse(minH) : null);
           if (humidity != null && minHum != null && humidity < minHum) {
             alerts++;
+            // Fire a local notification once per day if enabled
+            if (id != null) {
+              // Best-effort; do not await to keep UI responsive
+              // ignore: discarded_futures
+              NotificationsService.instance.showThresholdAlertOncePerDay(
+                plantId: id,
+                plantName: name,
+                humidity: humidity,
+                minHum: minHum,
+              );
+            }
           }
         }
       }
@@ -163,18 +176,6 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
           fontWeight: FontWeight.bold,
         ),
       ),
-      actions: [
-        IconButton(
-          icon: Icon(
-            Icons.notifications_outlined,
-            color: theme.dividerColor,
-          ),
-          onPressed: () {
-            // TODO: Navigate to notifications
-          },
-        ),
-        const SizedBox(width: UIConstants.spacingS),
-      ],
     );
   }
 

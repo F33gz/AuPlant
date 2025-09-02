@@ -166,45 +166,20 @@ class ProfilePage extends StatelessWidget {
         const SizedBox(height: UIConstants.spacingM),
         _buildOptionTile(
           context: context,
-          icon: Icons.person_outline,
-          title: 'Editar Perfil',
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Funcionalidad próximamente disponible'),
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: UIConstants.spacingM),
-        
-        _buildOptionTile(
-          context: context,
           icon: Icons.notifications_outlined,
           title: 'Notificaciones',
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Funcionalidad próximamente disponible'),
-              ),
-            );
-          },
+          onTap: () => Navigator.of(context).pushNamed(AppRoutes.notifications),
+        ),
+        const SizedBox(height: UIConstants.spacingM),
+        _buildOptionTile(
+          context: context,
+          icon: Icons.person_outline,
+          title: 'Editar Perfil',
+          onTap: () => Navigator.of(context).pushNamed(AppRoutes.editProfile),
         ),
         const SizedBox(height: UIConstants.spacingM),
         
-        _buildOptionTile(
-          context: context,
-          icon: Icons.help_outline,
-          title: 'Ayuda y Soporte',
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Funcionalidad próximamente disponible'),
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: UIConstants.spacingM),
+  // Removed Help & Support section as requested
         
         _buildOptionTile(
           context: context,

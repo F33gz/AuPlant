@@ -8,6 +8,8 @@ import '../../features/plants/presentation/pages/add_plant_page.dart';
 import '../../features/plants/presentation/pages/plant_settings_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/signup_page.dart';
+import '../../features/auth/presentation/pages/edit_profile_page.dart';
+import '../../features/auth/presentation/pages/notifications_page.dart';
 import '../../features/plants/domain/entities/plant.dart';
 
 /// Route Generator
@@ -77,6 +79,18 @@ class RouteGenerator {
       case AppRoutes.signup:
         return MaterialPageRoute(
           builder: (_) => const SignupPage(),
+          settings: settings,
+        );
+
+      case AppRoutes.editProfile:
+        return MaterialPageRoute(
+          builder: (_) => const EditProfilePage(),
+          settings: settings,
+        );
+
+      case AppRoutes.notifications:
+        return MaterialPageRoute(
+          builder: (_) => const NotificationsPage(),
           settings: settings,
         );
 
