@@ -7,7 +7,7 @@ abstract class SensorRemoteDataSource {
   Future<List<SensorDataDto>> getAllSensorData();
   Future<SensorDataDto> getSensorData(String plantId);
   Future<void> sendWateringCommand({
-    required String accessToken,
+  required String plantId,
     required Map<String, dynamic> attributes,
   });
 }
@@ -64,7 +64,7 @@ class SensorRemoteDataSourceImpl implements SensorRemoteDataSource {
 
   @override
   Future<void> sendWateringCommand({
-    required String accessToken,
+  required String plantId,
     required Map<String, dynamic> attributes,
   }) async {
     try {
@@ -74,10 +74,10 @@ class SensorRemoteDataSourceImpl implements SensorRemoteDataSource {
       }
 
       final response = await supabaseClient.functions.invoke(
-        'regado',
+        'control_pump',
         body: {
-          'accessToken': accessToken,
-          'atributos': attributes,
+          'plant_id': plantId,
+          ...attributes,
         },
         headers: {
           'Authorization': 'Bearer ${session.accessToken}',

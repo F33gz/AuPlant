@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../shared/constants/ui_constants.dart';
@@ -9,6 +10,8 @@ import '../widgets/overview_stat_card.dart';
 import '../widgets/plant_overview_tile.dart';
 import '../../domain/entities/plant.dart';
 import '../../domain/usecases/get_plants_usecase.dart';
+import '../../../../core/network/blynk_api.dart';
+import '../../../../shared/utils/notifications_service.dart';
 
 /// Plants Overview Page
 /// 
@@ -23,10 +26,15 @@ class PlantsOverviewPage extends StatefulWidget {
 
 class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
   final GetPlantsUseCase _getPlantsUseCase = GetIt.instance<GetPlantsUseCase>();
+  final _blynkApi = BlynkApi();
   
   List<Plant> _plants = [];
   bool _isLoading = true;
   String? _error;
+  final Map<String, double> _liveHumidityByPlant = {};
+  int? _connectedCount;
+  int? _alertsCount;
+  final Map<String, bool> _onlineByPlant = {};
 
   @override
   void initState() {
@@ -48,6 +56,9 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
           _plants = success.data;
           _isLoading = false;
         });
+  // Kick off connected count and live humidity loads (best-effort)
+  _loadConnectedCount();
+        _loadLiveForPlants();
         break;
       case Error<List<Plant>> error:
         setState(() {
@@ -55,6 +66,89 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
           _isLoading = false;
         });
         break;
+    }
+  }
+
+  Future<void> _loadLiveForPlants() async {
+    // Fetch live humidity for each plant; best-effort, no blocking UI
+    for (final p in _plants) {
+      try {
+        final live = await _blynkApi.getLive(p.id);
+        final value = live.humidityPercent ?? live.humidityRaw;
+        if (!mounted) return;
+        setState(() {
+          if (value != null) {
+            _liveHumidityByPlant[p.id] = value;
+          }
+          if (live.online != null) {
+            _onlineByPlant[p.id] = live.online!;
+            _connectedCount = _onlineByPlant.values.where((v) => v == true).length;
+          }
+        });
+      } catch (_) {
+        // ignore per-plant failures
+      }
+    }
+  }
+
+  Future<void> _loadConnectedCount() async {
+    try {
+      final client = Supabase.instance.client;
+      final session = client.auth.currentSession;
+      if (session == null) {
+        // Not logged in; cannot get protected function
+        return;
+      }
+      final res = await client.functions.invoke(
+        'get_plant_data',
+        headers: {
+          'Authorization': 'Bearer ${session.accessToken}',
+          'Content-Type': 'application/json',
+        },
+      );
+      final data = (res.data as Map?)?.cast<String, dynamic>();
+      final plantas = (data?['plantas'] as List?) ?? const [];
+      int count = 0;
+      int alerts = 0;
+      final Map<String, bool> onlineById = {};
+      for (final e in plantas) {
+        if (e is Map) {
+          final id = e['id']?.toString();
+          final name = (e['nombre']?.toString() ?? 'Planta');
+          final isOnline = e['online'] == true;
+          if (id != null) onlineById[id] = isOnline;
+          if (isOnline) count++;
+
+          final h = e['humedad'];
+          final minH = e['min_humedad'];
+          final humidity = h is num ? h.toDouble() : (h is String ? double.tryParse(h) : null);
+          final minHum = minH is num ? minH.toDouble() : (minH is String ? double.tryParse(minH) : null);
+          if (humidity != null && minHum != null && humidity < minHum) {
+            alerts++;
+            // Fire a local notification once per day if enabled
+            if (id != null) {
+              // Best-effort; do not await to keep UI responsive
+              // ignore: discarded_futures
+              NotificationsService.instance.showThresholdAlertOncePerDay(
+                plantId: id,
+                plantName: name,
+                humidity: humidity,
+                minHum: minHum,
+              );
+            }
+          }
+        }
+      }
+      if (!mounted) return;
+      setState(() {
+        _connectedCount = count;
+        _alertsCount = alerts;
+        _onlineByPlant
+          ..clear()
+          ..addAll(onlineById);
+      });
+    } catch (_) {
+      // ignore errors; leave count null
     }
   }
 
@@ -73,8 +167,8 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     return AppBar(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      elevation: 0,
+  backgroundColor: theme.scaffoldBackgroundColor,
+  elevation: 0,
       title: Text(
         'AuPlant',
         style: AppTextStyles.titleLarge.copyWith(
@@ -82,18 +176,6 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
           fontWeight: FontWeight.bold,
         ),
       ),
-      actions: [
-        IconButton(
-          icon: Icon(
-            Icons.notifications_outlined,
-            color: theme.dividerColor,
-          ),
-          onPressed: () {
-            // TODO: Navigate to notifications
-          },
-        ),
-        const SizedBox(width: UIConstants.spacingS),
-      ],
     );
   }
 
@@ -170,6 +252,8 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
           ),
           child: PlantOverviewTile(
             plant: p,
+            currentHumidity: _liveHumidityByPlant[p.id],
+            online: _onlineByPlant[p.id],
             onTap: () => _navigateToPlantDetail(p),
           ),
         );
@@ -178,7 +262,8 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
   }
 
   Widget _buildStatsRow() {
-    final connected = _plants.where((_) => true).length; // placeholder
+  final connected = _connectedCount ?? 0;
+  final alerts = _alertsCount ?? 0;
     return Row(
       children: [
         Expanded(
@@ -197,11 +282,11 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
           ),
         ),
         const SizedBox(width: UIConstants.spacingL),
-        const Expanded(
+        Expanded(
           child: OverviewStatCard(
             icon: Icons.warning_amber_outlined,
             title: 'Alertas',
-            value: '0',
+            value: alerts.toString(),
           ),
         ),
       ],
@@ -238,7 +323,11 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
       context,
       '/plant-detail',
       arguments: plant,
-    );
+    ).then((result) {
+      if (result == 'deleted') {
+        _loadPlants();
+      }
+    });
   }
 
   void _navigateToAddPlant() {

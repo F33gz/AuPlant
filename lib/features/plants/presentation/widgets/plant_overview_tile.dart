@@ -11,23 +11,21 @@ class PlantOverviewTile extends StatelessWidget {
 
   /// Placeholder current humidity, to be wired to live data later
   final double? currentHumidity;
-  /// Placeholder average humidity
-  final double? averageHumidity;
+  final bool? online;
 
   const PlantOverviewTile({
     super.key,
     required this.plant,
     this.onTap,
-    this.currentHumidity,
-    this.averageHumidity,
+  this.currentHumidity,
+  this.online,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final humidityNow = currentHumidity ?? 65.0; // TODO: bind to Supabase/Blynk
-    final avg = averageHumidity ?? 64.2;
+  final humidityNow = currentHumidity ?? 65.0; // If null, keep placeholder or replace with N/A below
 
     return Material(
       color: cs.surface,
@@ -62,9 +60,16 @@ class PlantOverviewTile extends StatelessWidget {
                         const SizedBox(height: UIConstants.spacingXS),
                         Row(
                           children: [
-                            Icon(Icons.circle, size: 8, color: AppColors.online),
+                            Icon(
+                              Icons.circle,
+                              size: 8,
+                              color: (online ?? false) ? AppColors.online : AppColors.offline,
+                            ),
                             const SizedBox(width: 6),
-                            Text('En línea', style: AppTextStyles.statusOnline),
+                            Text(
+                              (online ?? false) ? 'En línea' : 'Desconectada',
+                              style: (online ?? false) ? AppTextStyles.statusOnline : AppTextStyles.statusOffline,
+                            ),
                           ],
                         ),
                       ],
@@ -80,7 +85,6 @@ class PlantOverviewTile extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('Umbral: ${plant.thresholds.minHumidity.toStringAsFixed(0)}%', style: AppTextStyles.caption),
-                  Text('Prom: ${avg.toStringAsFixed(1)}%', style: AppTextStyles.caption),
                 ],
               ),
             ],
@@ -103,10 +107,10 @@ class PlantOverviewTile extends StatelessWidget {
     );
   }
 
-  Widget _humidityCard(BuildContext context, double current, double thresholdMin) {
+  Widget _humidityCard(BuildContext context, double? current, double thresholdMin) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final isGood = current >= thresholdMin;
+  final isGood = current != null && current >= thresholdMin;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(
@@ -127,7 +131,7 @@ class PlantOverviewTile extends StatelessWidget {
             child: Text('Humedad', style: AppTextStyles.labelMedium),
           ),
           Text(
-            '${current.toStringAsFixed(1)}%',
+            current == null ? 'N/A' : '${current.toStringAsFixed(1)}%',
             style: AppTextStyles.titleSmall.copyWith(
               color: isGood ? AppColors.success : cs.error,
               fontWeight: FontWeight.w700,

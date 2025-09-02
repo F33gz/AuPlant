@@ -10,12 +10,12 @@ class SensorDataDto {
   final double? humedad;
   final double? luz;
   final String? deviceId;
+  final bool? online;
   final List<SensorDataPointDto> recentHumidityReadings;
   final List<SensorDataPointDto> recentLightReadings;
   final SensorStatisticsDto? humidityStatistics;
   final SensorStatisticsDto? lightStatistics;
   final String? error;
-  final String? accessToken;
 
   const SensorDataDto({
     required this.plantId,
@@ -26,12 +26,12 @@ class SensorDataDto {
     this.humedad,
     this.luz,
     this.deviceId,
+  this.online,
     this.recentHumidityReadings = const [],
     this.recentLightReadings = const [],
     this.humidityStatistics,
     this.lightStatistics,
     this.error,
-    this.accessToken,
   });
 
   factory SensorDataDto.fromJson(Map<String, dynamic> json) {
@@ -44,12 +44,12 @@ class SensorDataDto {
       humedad: _parseDouble(json['humedad']),
       luz: _parseDouble(json['luz']),
       deviceId: json['device_id']?.toString(),
+  online: _parseBool(json['online']),
       recentHumidityReadings: _parseRecentReadings(json, 'recentReadings', 'humidity'),
       recentLightReadings: _parseRecentReadings(json, 'recentReadings', 'light'),
       humidityStatistics: _parseStatistics(json, 'statistics', 'humidity'),
       lightStatistics: _parseStatistics(json, 'statistics', 'light'),
       error: json['error']?.toString(),
-      accessToken: json['access_token'] as String?,
     );
   }
 
@@ -59,13 +59,25 @@ class SensorDataDto {
       plantId: plantId,
       humidity: humedad,
       light: luz,
-      isOnline: humedad != null && luz != null && error == null,
+      isOnline: online ?? (humedad != null && luz != null && error == null),
       timestamp: DateTime.now(),
       recentHumidityReadings: recentHumidityReadings.map((dto) => dto.toEntity()).toList(),
       recentLightReadings: recentLightReadings.map((dto) => dto.toEntity()).toList(),
       humidityStatistics: humidityStatistics?.toEntity(),
       lightStatistics: lightStatistics?.toEntity(),
     );
+  }
+
+  static bool? _parseBool(dynamic value) {
+    if (value == null) return null;
+    if (value is bool) return value;
+    if (value is String) {
+      final v = value.trim().toLowerCase();
+      if (v == 'true') return true;
+      if (v == 'false') return false;
+    }
+    if (value is num) return value != 0;
+    return null;
   }
 
   static double? _parseDouble(dynamic value) {

@@ -3,13 +3,13 @@ import '../../../../shared/widgets/forms/plant_form_field.dart';
 import '../../../../shared/widgets/forms/emoji_selector.dart';
 import '../../../../shared/widgets/forms/plant_type_dropdown.dart';
 import '../../../../shared/utils/form_validators.dart';
+import '../../../../shared/widgets/qr_scanner_page.dart';
 
 class AddPlantForm extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final TextEditingController nameController;
   final TextEditingController locationController;
   final TextEditingController deviceIdController;
-  final TextEditingController accessTokenController;
   final TextEditingController descriptionController;
   final String selectedEmoji;
   final String selectedPlantType;
@@ -39,7 +39,6 @@ class AddPlantForm extends StatelessWidget {
     required this.nameController,
     required this.locationController,
     required this.deviceIdController,
-    required this.accessTokenController,
     required this.descriptionController,
     required this.selectedEmoji,
     required this.selectedPlantType,
@@ -91,21 +90,19 @@ class AddPlantForm extends StatelessWidget {
             validator: FormValidators.validateDeviceId,
             suffixIcon: IconButton(
               icon: Icon(Icons.qr_code_scanner),
-              onPressed: () {
-                // QR code scanner functionality
+              onPressed: () async {
+                final scanned = await Navigator.of(context).push<String>(
+                  MaterialPageRoute(builder: (_) => const QrScannerPage()),
+                );
+                if (scanned != null && scanned.isNotEmpty) {
+                  deviceIdController.text = scanned.trim();
+                }
               },
             ),
           ),
           SizedBox(height: 16),
           
-          PlantFormField(
-            label: 'Token de acceso',
-            hintText: 'Ingresa el token de acceso',
-            controller: accessTokenController,
-            validator: FormValidators.validateAccessToken,
-            obscureText: true,
-          ),
-          SizedBox(height: 24),
+          // Access token removed; deviceId serves as Blynk token
           
           PlantFormField(
             label: 'Descripción (opcional)',

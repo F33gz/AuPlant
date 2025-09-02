@@ -12,7 +12,6 @@ abstract class PlantRemoteDataSource {
     String? emoji,
     String? description,
     String? location,
-    String? accessToken,
   });
   Future<PlantDto> updatePlant({
     required String plantId,
@@ -20,8 +19,11 @@ abstract class PlantRemoteDataSource {
     String? emoji,
     String? description,
     String? deviceId,
-    String? location,
-    String? accessToken,
+  String? location,
+  double? minHumidity,
+  double? maxHumidity,
+  double? minLight,
+  double? maxLight,
   });
   Future<void> deletePlant(String plantId);
   Stream<List<PlantDto>> watchUserPlants();
@@ -69,7 +71,6 @@ class PlantRemoteDataSourceImpl implements PlantRemoteDataSource {
     String? emoji,
     String? description,
     String? location,
-    String? accessToken,
   }) async {
     try {
       final session = supabaseClient.auth.currentSession;
@@ -86,7 +87,11 @@ class PlantRemoteDataSourceImpl implements PlantRemoteDataSource {
             'device_id': deviceId,
             'ubicacion': location,
             'user_id': session.user.id,
-            'access_token': accessToken,
+            // optional defaults can be set at DB level; if needed set here
+            // 'min_humedad': 30,
+            // 'max_humedad': 70,
+            // 'min_luz': 200,
+            // 'max_luz': 800,
           })
           .select()
           .single();
@@ -104,8 +109,11 @@ class PlantRemoteDataSourceImpl implements PlantRemoteDataSource {
     String? emoji,
     String? description,
     String? deviceId,
-    String? location,
-    String? accessToken,
+  String? location,
+  double? minHumidity,
+  double? maxHumidity,
+  double? minLight,
+  double? maxLight,
   }) async {
     try {
       final session = supabaseClient.auth.currentSession;
@@ -119,7 +127,10 @@ class PlantRemoteDataSourceImpl implements PlantRemoteDataSource {
       if (description != null) updateData['descripcion'] = description;
       if (deviceId != null) updateData['device_id'] = deviceId;
       if (location != null) updateData['ubicacion'] = location;
-      if (accessToken != null) updateData['access_token'] = accessToken;
+  if (minHumidity != null) updateData['min_humedad'] = minHumidity;
+  if (maxHumidity != null) updateData['max_humedad'] = maxHumidity;
+  if (minLight != null) updateData['min_luz'] = minLight;
+  if (maxLight != null) updateData['max_luz'] = maxLight;
 
       final response = await supabaseClient.functions.invoke(
         'modify_plant',

@@ -35,10 +35,6 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
   bool _isLoading = false;
   bool _hasUnsavedChanges = false;
 
-  final List<String> _plantEmojis = [
-    '🌱', '🌿', '🌾', '🌵', '🌳', '🌲', '🌴', 
-    '🌸', '🌼', '🌹', '💐', '🌻', '🌺', '🌷'
-  ];
 
   final UpdatePlantUseCase _updatePlantUseCase = GetIt.instance<UpdatePlantUseCase>();
   final DeletePlantUseCase _deletePlantUseCase = GetIt.instance<DeletePlantUseCase>();
@@ -139,7 +135,6 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
             title: 'Icono de la Planta',
             child: PlantEmojiSelector(
               selectedEmoji: _selectedEmoji,
-              plantEmojis: _plantEmojis,
               onEmojiSelected: (emoji) {
                 setState(() {
                   _selectedEmoji = emoji;
@@ -178,7 +173,7 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
           ),
           const SizedBox(height: 24),
           SettingsSection(
-            title: 'Zona de Peligro',
+            title: 'Eliminar planta',
             child: PlantDangerZone(
               onDelete: _deletePlant,
               plantName: widget.plant.name,
@@ -206,6 +201,9 @@ class _PlantSettingsPageState extends State<PlantSettingsPage> {
         emoji: _selectedEmoji,
         location: _locationController.text.trim(),
         deviceId: widget.plant.deviceId,
+  minHumidity: _minHumidity,
+  minLight: _minLight,
+  maxLight: _maxLight,
       );
       
       switch (result) {

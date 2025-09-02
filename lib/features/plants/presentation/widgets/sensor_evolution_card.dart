@@ -3,26 +3,71 @@ import 'dart:math' as math;
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../shared/constants/ui_constants.dart';
+import '../../../../core/network/blynk_api.dart';
 
 /// Placeholder chart card to mimic historical evolution section
 class SensorEvolutionCard extends StatefulWidget {
-  const SensorEvolutionCard({super.key});
+  final String plantId;
+  const SensorEvolutionCard({super.key, required this.plantId});
 
   @override
   State<SensorEvolutionCard> createState() => _SensorEvolutionCardState();
 }
 
 class _SensorEvolutionCardState extends State<SensorEvolutionCard> {
+  final _api = BlynkApi();
   int _selected = 0; // 0 humidity, 1 light
-  late final List<double> _humiditySeries;
-  late final List<double> _lightSeries;
+  List<double> _humiditySeries = const [];
+  List<double> _lightSeries = const [];
+  bool _loading = true;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-  // Generate 12 points (0..55 min) -> 1h with 5-min intervals
-  _humiditySeries = _genSeries(12, base: 62, varAmp: 4, min: 40, max: 80);
-  _lightSeries = _genSeries(12, base: 1200, varAmp: 300, min: 100, max: 2200);
+    _loadHistory();
+  }
+
+  Future<void> _loadHistory() async {
+    try {
+      final res = await Future.wait([
+        _api.getHistory(plantId: widget.plantId, pin: 'V0', period: 'HOUR', granularityType: 'MINUTE'),
+        _api.getHistory(plantId: widget.plantId, pin: 'V1', period: 'HOUR', granularityType: 'MINUTE'),
+      ]);
+      final humPoints = res[0].points;
+      final lightPoints = res[1].points;
+
+      // Normalize humidity raw to %; keep light as raw scale
+      List<double> hum = humPoints.map((p) {
+        final pct = (1 - (p.v / 4025.0)) * 100.0;
+        return pct.clamp(0.0, 100.0);
+      }).toList();
+      List<double> lig = lightPoints.map((p) => p.v).toList();
+
+      if (hum.isEmpty) {
+        hum = _genSeries(12, base: 62, varAmp: 4, min: 40, max: 80);
+      }
+      if (lig.isEmpty) {
+        lig = _genSeries(12, base: 1200, varAmp: 300, min: 100, max: 2200);
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _humiditySeries = hum;
+        _lightSeries = lig;
+        _loading = false;
+        _error = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = 'No se pudo cargar la telemetría';
+        // Fallback data
+        _humiditySeries = _genSeries(12, base: 62, varAmp: 4, min: 40, max: 80);
+        _lightSeries = _genSeries(12, base: 1200, varAmp: 300, min: 100, max: 2200);
+      });
+    }
   }
 
   @override
@@ -50,7 +95,10 @@ class _SensorEvolutionCardState extends State<SensorEvolutionCard> {
             ],
           ),
           const SizedBox(height: UIConstants.spacingL),
-          _chartWithAxis(),
+          if (_loading)
+            const Center(child: CircularProgressIndicator())
+          else
+            _chartWithAxis(),
           const SizedBox(height: UIConstants.spacingL),
           Row(
             children: [
@@ -59,6 +107,10 @@ class _SensorEvolutionCardState extends State<SensorEvolutionCard> {
               _chip(context, 'Luz', icon: Icons.light_mode, selected: _selected == 1, onTap: () => setState(() => _selected = 1)),
             ],
           ),
+          if (_error != null) ...[
+            const SizedBox(height: 8),
+            Text(_error!, style: AppTextStyles.caption.copyWith(color: AppColors.warning)),
+          ]
         ],
       ),
     );
@@ -101,7 +153,7 @@ class _SensorEvolutionCardState extends State<SensorEvolutionCard> {
     ? ['0%', '25%', '50%', '75%', '100%']
     : ['0', '625', '1250', '1875', '2500'];
 
-    final now = DateTime.now();
+  final now = DateTime.now();
     // 1 hora con intervalos de 10 minutos -> 6 marcas (50,40,30,20,10,0)
     final labels = List.generate(6, (i) {
       final minutesAgo = 50 - i * 10;

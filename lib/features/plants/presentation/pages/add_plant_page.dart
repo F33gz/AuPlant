@@ -5,6 +5,7 @@ import '../../../../core/utils/result.dart';
 import '../../../../shared/widgets/forms/custom_text_field.dart';
 import '../../../../shared/widgets/forms/custom_dropdown.dart';
 import '../../../../shared/widgets/buttons/action_buttons.dart';
+import '../../../../shared/widgets/qr_scanner_page.dart';
 import '../widgets/plant_emoji_selector.dart';
 import '../../domain/entities/plant.dart';
 import '../../domain/usecases/add_plant_usecase.dart';
@@ -21,17 +22,12 @@ class _AddPlantPageState extends State<AddPlantPage> {
   final _nameController = TextEditingController();
   final _locationController = TextEditingController();
   final _deviceIdController = TextEditingController();
-  final _accessTokenController = TextEditingController();
   final _descriptionController = TextEditingController();
   final AddPlantUseCase _addPlantUseCase = GetIt.instance<AddPlantUseCase>();
   
   String _selectedEmoji = '🌱';
   bool _isLoading = false;
 
-  final List<String> _plantEmojis = [
-    '🌱', '🌿', '🌾', '🌵', '🌳', '🌲', '🌴', 
-    '🌸', '🌼', '🌹', '💐', '🌻', '🌺', '🌷'
-  ];
 
   final List<String> _plantTypes = [
     'Vegetable Garden',
@@ -52,7 +48,6 @@ class _AddPlantPageState extends State<AddPlantPage> {
     _nameController.dispose();
     _locationController.dispose();
     _deviceIdController.dispose();
-    _accessTokenController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
@@ -104,8 +99,6 @@ class _AddPlantPageState extends State<AddPlantPage> {
             _buildLocationField(),
             const SizedBox(height: 24),
             _buildDeviceField(),
-            const SizedBox(height: 16),
-            _buildAccessTokenField(),
             const SizedBox(height: 24),
             _buildActionButtons(),
           ],
@@ -131,7 +124,6 @@ class _AddPlantPageState extends State<AddPlantPage> {
   Widget _buildEmojiSelector() {
     return PlantEmojiSelector(
       selectedEmoji: _selectedEmoji,
-      plantEmojis: _plantEmojis,
       onEmojiSelected: (emoji) {
         setState(() {
           _selectedEmoji = emoji;
@@ -176,8 +168,13 @@ class _AddPlantPageState extends State<AddPlantPage> {
       hintText: 'Ingresa el ID del dispositivo o escanea el código QR',
       suffixIcon: IconButton(
     icon: Icon(Icons.qr_code_scanner, color: isDark ? AppColors.textMutedOnDark : AppColors.textSecondary),
-        onPressed: () {
-          // TODO: Implement QR code scanner
+        onPressed: () async {
+          final scanned = await Navigator.of(context).push<String>(
+            MaterialPageRoute(builder: (_) => const QrScannerPage()),
+          );
+          if (scanned != null && scanned.isNotEmpty) {
+            _deviceIdController.text = scanned.trim();
+          }
         },
       ),
       validator: (value) {
@@ -189,19 +186,7 @@ class _AddPlantPageState extends State<AddPlantPage> {
     );
   }
 
-  Widget _buildAccessTokenField() {
-    return CustomTextField(
-      controller: _accessTokenController,
-      label: 'Token de acceso',
-      hintText: 'Ingresa el token de acceso',
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Por favor ingresa un token de acceso';
-        }
-        return null;
-      },
-    );
-  }
+  // Removed access token field; deviceId is used as Blynk token
 
   Widget _buildActionButtons() {
     return Row(

@@ -17,7 +17,6 @@ abstract class PlantRepository {
     String? emoji,
     String? description,
     String? location,
-    String? accessToken,
   });
   
   /// Update an existing plant
@@ -27,8 +26,11 @@ abstract class PlantRepository {
     String? emoji,
     String? description,
     String? deviceId,
-    String? location,
-    String? accessToken,
+  String? location,
+  double? minHumidity,
+  double? maxHumidity,
+  double? minLight,
+  double? maxLight,
   });
   
   /// Delete a plant
@@ -40,9 +42,9 @@ abstract class PlantRepository {
   /// Get sensor data for all plants
   Future<Result<List<SensorData>>> getAllSensorData();
   
-  /// Send watering command
+  /// Send watering command (via device id/token stored in backend)
   Future<Result<void>> sendWateringCommand({
-    required String accessToken,
+    required String plantId,
     required Map<String, dynamic> attributes,
   });
   

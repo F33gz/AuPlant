@@ -14,7 +14,6 @@ class AddPlantUseCase {
     String? emoji,
     String? description,
     String? location,
-    String? accessToken,
   }) async {
     return await repository.addPlant(
       name: name,
@@ -22,7 +21,6 @@ class AddPlantUseCase {
       emoji: emoji,
       description: description,
       location: location,
-      accessToken: accessToken,
     );
   }
 }

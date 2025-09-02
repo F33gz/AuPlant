@@ -6,19 +6,25 @@ import '../../../../app/theme/app_colors.dart';
 /// Widget for selecting plant emoji with grid layout
 class PlantEmojiSelector extends StatelessWidget {
   final String selectedEmoji;
-  final List<String> plantEmojis;
+  final List<String>? plantEmojis; // Optional: defaults internally
   final Function(String) onEmojiSelected;
+
+  static const List<String> _defaultEmojis = [
+    '🌱', '🌿', '🌾', '🌵', '🌳', '🌲', '🌴',
+    '🌸', '🌼', '🌹', '💐', '🌻', '🌺', '🌷',
+  ];
 
   const PlantEmojiSelector({
     super.key,
     required this.selectedEmoji,
-    required this.plantEmojis,
+    this.plantEmojis,
     required this.onEmojiSelected,
   });
 
   @override
   Widget build(BuildContext context) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
+  final emojis = plantEmojis ?? _defaultEmojis;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -46,9 +52,9 @@ class PlantEmojiSelector extends StatelessWidget {
 
               // Calculate columns that fit while keeping at least the minimum spacing
               final int columns =
-                  (constraints.maxWidth / (itemSize + minSpacing))
-                      .floor()
-                      .clamp(1, plantEmojis.length);
+          (constraints.maxWidth / (itemSize + minSpacing))
+            .floor()
+            .clamp(1, emojis.length);
 
               // Distribute any extra space as additional spacing to avoid large blanks
               final double remaining =
@@ -61,7 +67,7 @@ class PlantEmojiSelector extends StatelessWidget {
                 runAlignment: WrapAlignment.start,
                 spacing: spacing < minSpacing ? minSpacing : spacing,
                 runSpacing: 12,
-                children: plantEmojis.map((emoji) {
+        children: emojis.map((emoji) {
                   final isSelected = emoji == selectedEmoji;
                   return SizedBox(
                     width: itemSize,

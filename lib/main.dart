@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/di/dependency_injection.dart';
 import 'app/app.dart';
 import 'app/theme/theme_controller.dart';
+import 'shared/utils/notifications_service.dart';
 
 /// Updated main.dart with dependency injection
 /// 
@@ -22,6 +23,8 @@ void main() async {
 
   // Load theme preference
   await ThemeController.instance.load();
+  // Initialize local notifications service
+  await NotificationsService.instance.initialize();
   
   runApp(const AuPlantRoot());
 }

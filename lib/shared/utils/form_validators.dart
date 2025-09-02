@@ -27,15 +27,7 @@ class FormValidators {
     return null;
   }
 
-  static String? validateAccessToken(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Por favor ingresa el token de acceso';
-    }
-    if (value.trim().length < 10) {
-      return 'El token de acceso parece ser muy corto';
-    }
-    return null;
-  }
+  // Access token validation removed; using deviceId only
 
   static String? validateLocation(String? value) {
     if (value != null && value.trim().isNotEmpty && value.trim().length < 2) {
