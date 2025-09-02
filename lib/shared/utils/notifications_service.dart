@@ -4,7 +4,6 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'package:flutter_native_timezone_updated_gradle/flutter_native_timezone.dart' as fntz;
 
 class NotificationsService {
   NotificationsService._();
@@ -29,14 +28,21 @@ class NotificationsService {
     await _fln.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()?.requestPermissions(alert: true, badge: true, sound: true);
 
     // Timezone init
-    try {
-      tz.initializeTimeZones();
-      final name = await fntz.FlutterNativeTimezone.getLocalTimezone();
-      tz.setLocalLocation(tz.getLocation(name));
-    } catch (_) {
-      // Fallback to UTC
-      tz.setLocalLocation(tz.getLocation('UTC'));
+    tz.initializeTimeZones();
+    final candidates = <String>[
+      'America/Bogota', 'America/Mexico_City', 'America/Lima', 'America/Guayaquil',
+      'America/Argentina/Buenos_Aires', 'America/Santiago', 'America/Sao_Paulo',
+      'Europe/Madrid', 'UTC',
+    ];
+    bool set = false;
+    for (final id in candidates) {
+      try {
+        tz.setLocalLocation(tz.getLocation(id));
+        set = true;
+        break;
+      } catch (_) {}
     }
+    if (!set) tz.setLocalLocation(tz.getLocation('UTC'));
 
     _initialized = true;
   }

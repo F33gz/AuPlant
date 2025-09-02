@@ -3,7 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
-import 'package:flutter_native_timezone_updated_gradle/flutter_native_timezone.dart' as fntz;
+// Native timezone plugin removed; using timezone DB with fallback
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -37,12 +37,21 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
     // Timezone init
     tzdata.initializeTimeZones();
-    try {
-      final name = await fntz.FlutterNativeTimezone.getLocalTimezone();
-      tz.setLocalLocation(tz.getLocation(name));
-    } catch (_) {
-      tz.setLocalLocation(tz.getLocation('UTC'));
+    // Best-effort: guess local zone by common IDs or fallback to UTC
+    final candidates = <String>[
+      'America/Bogota', 'America/Mexico_City', 'America/Lima', 'America/Guayaquil',
+      'America/Argentina/Buenos_Aires', 'America/Santiago', 'America/Sao_Paulo',
+      'Europe/Madrid', 'UTC',
+    ];
+    bool set = false;
+    for (final id in candidates) {
+      try {
+        tz.setLocalLocation(tz.getLocation(id));
+        set = true;
+        break;
+      } catch (_) {}
     }
+    if (!set) tz.setLocalLocation(tz.getLocation('UTC'));
 
     final prefs = await SharedPreferences.getInstance();
     setState(() {
