@@ -32,6 +32,7 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
   String? _error;
   final Map<String, double> _liveHumidityByPlant = {};
   int? _connectedCount;
+  int? _alertsCount;
   final Map<String, bool> _onlineByPlant = {};
 
   @override
@@ -107,6 +108,7 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
       final data = (res.data as Map?)?.cast<String, dynamic>();
       final plantas = (data?['plantas'] as List?) ?? const [];
       int count = 0;
+      int alerts = 0;
       final Map<String, bool> onlineById = {};
       for (final e in plantas) {
         if (e is Map) {
@@ -114,11 +116,20 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
           final isOnline = e['online'] == true;
           if (id != null) onlineById[id] = isOnline;
           if (isOnline) count++;
+
+          final h = e['humedad'];
+          final minH = e['min_humedad'];
+          final humidity = h is num ? h.toDouble() : (h is String ? double.tryParse(h) : null);
+          final minHum = minH is num ? minH.toDouble() : (minH is String ? double.tryParse(minH) : null);
+          if (humidity != null && minHum != null && humidity < minHum) {
+            alerts++;
+          }
         }
       }
       if (!mounted) return;
       setState(() {
         _connectedCount = count;
+        _alertsCount = alerts;
         _onlineByPlant
           ..clear()
           ..addAll(onlineById);
@@ -143,8 +154,8 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     return AppBar(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      elevation: 0,
+  backgroundColor: theme.scaffoldBackgroundColor,
+  elevation: 0,
       title: Text(
         'AuPlant',
         style: AppTextStyles.titleLarge.copyWith(
@@ -251,6 +262,7 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
 
   Widget _buildStatsRow() {
   final connected = _connectedCount ?? 0;
+  final alerts = _alertsCount ?? 0;
     return Row(
       children: [
         Expanded(
@@ -269,11 +281,11 @@ class _PlantsOverviewPageState extends State<PlantsOverviewPage> {
           ),
         ),
         const SizedBox(width: UIConstants.spacingL),
-        const Expanded(
+        Expanded(
           child: OverviewStatCard(
             icon: Icons.warning_amber_outlined,
             title: 'Alertas',
-            value: '0',
+            value: alerts.toString(),
           ),
         ),
       ],
