@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../shared/constants/ui_constants.dart';
 import '../../../../core/utils/result.dart';
+import '../../../../core/network/thingsboard_websocket_client.dart';
 import '../../../../shared/widgets/empty_state_widget.dart';
 import '../widgets/overview_stat_card.dart';
 import '../widgets/station_overview_tile.dart';
@@ -15,6 +17,7 @@ import '../../domain/usecases/get_sensor_data_usecase.dart';
 /// Stations Overview Page
 /// 
 /// The main page that displays all user greenhouse stations in a list format.
+/// Uses WebSocket for real-time telemetry updates across all stations.
 class StationsOverviewPage extends StatefulWidget {
   const StationsOverviewPage({super.key});
 
@@ -25,23 +28,45 @@ class StationsOverviewPage extends StatefulWidget {
 class _StationsOverviewPageState extends State<StationsOverviewPage> {
   final GetStationsUseCase _getStationsUseCase = GetIt.instance<GetStationsUseCase>();
   final GetSensorDataUseCase _getSensorDataUseCase = GetIt.instance<GetSensorDataUseCase>();
+  final ThingsBoardWebSocketClient _wsClient = GetIt.instance<ThingsBoardWebSocketClient>();
   
   List<Station> _stations = [];
   bool _isLoading = true;
   String? _error;
+  bool _wsConnected = false;
   
-  // Live sensor data from ThingsBoard API
+  // Live sensor data from ThingsBoard WebSocket
   final Map<String, double> _liveSoilHumidityByStation = {};
   final Map<String, double> _liveAmbientHumidityByStation = {};
   final Map<String, double> _liveTemperatureByStation = {};
   final Map<String, bool> _onlineByStation = {};
   int? _connectedCount;
   int? _alertsCount;
+  
+  // WebSocket subscriptions
+  StreamSubscription<TelemetryUpdate>? _wsSubscription;
+  final Map<String, int> _subscriptionCmdIds = {};
 
   @override
   void initState() {
     super.initState();
     _loadStations();
+  }
+  
+  @override
+  void dispose() {
+    _cleanupWebSocket();
+    super.dispose();
+  }
+  
+  void _cleanupWebSocket() {
+    // Unsubscribe from all devices
+    for (final cmdId in _subscriptionCmdIds.values) {
+      _wsClient.unsubscribeFromDevice(cmdId);
+    }
+    _subscriptionCmdIds.clear();
+    _wsSubscription?.cancel();
+    _wsSubscription = null;
   }
 
   Future<void> _loadStations() async {
@@ -58,7 +83,9 @@ class _StationsOverviewPageState extends State<StationsOverviewPage> {
           _stations = success.data;
           _isLoading = false;
         });
-        _loadLiveData();
+        // First load initial data via REST, then connect WebSocket
+        await _loadInitialData();
+        await _connectWebSocket();
         break;
       case Error<List<Station>> error:
         setState(() {
@@ -69,11 +96,9 @@ class _StationsOverviewPageState extends State<StationsOverviewPage> {
     }
   }
 
-  Future<void> _loadLiveData() async {
-    // Load telemetry data for each station from ThingsBoard
+  /// Load initial telemetry data via REST API
+  Future<void> _loadInitialData() async {
     for (final station in _stations) {
-      if (station.deviceId == null) continue;
-      
       final result = await _getSensorDataUseCase.call(station.id);
       
       if (result is Success<SensorData>) {
@@ -94,8 +119,81 @@ class _StationsOverviewPageState extends State<StationsOverviewPage> {
         }
       }
     }
+    _updateStats();
+  }
+
+  /// Connect WebSocket and subscribe to all stations for real-time updates
+  Future<void> _connectWebSocket() async {
+    if (_stations.isEmpty) return;
     
-    // Calculate connected count and alerts
+    try {
+      // Cleanup any existing subscriptions
+      _cleanupWebSocket();
+      
+      final connected = await _wsClient.connect();
+      if (!connected || !mounted) return;
+      
+      // Subscribe to all stations at once
+      final deviceIds = _stations.map((s) => s.id).toList();
+      final subscriptions = _wsClient.subscribeToDevices(
+        deviceIds,
+        keys: ['soil', 'hum', 'temp'],
+      );
+      
+      _subscriptionCmdIds.addAll(subscriptions);
+      
+      // Listen for telemetry updates
+      _wsSubscription = _wsClient.telemetryStream.listen(
+        _handleTelemetryUpdate,
+        onError: (e) {
+          // On error, mark as disconnected but keep existing data
+          if (mounted) {
+            setState(() {
+              _wsConnected = false;
+            });
+          }
+        },
+      );
+      
+      if (mounted) {
+        setState(() {
+          _wsConnected = true;
+        });
+      }
+    } catch (e) {
+      // WebSocket failed, data will be stale but still visible
+      if (mounted) {
+        setState(() {
+          _wsConnected = false;
+        });
+      }
+    }
+  }
+
+  /// Handle incoming telemetry updates from WebSocket
+  void _handleTelemetryUpdate(TelemetryUpdate update) {
+    if (!mounted) return;
+    
+    final stationId = update.deviceId;
+    
+    setState(() {
+      if (update.soilHumidity != null) {
+        _liveSoilHumidityByStation[stationId] = update.soilHumidity!;
+      }
+      if (update.ambientHumidity != null) {
+        _liveAmbientHumidityByStation[stationId] = update.ambientHumidity!;
+      }
+      if (update.temperature != null) {
+        _liveTemperatureByStation[stationId] = update.temperature!;
+      }
+      _onlineByStation[stationId] = true;
+    });
+    
+    _updateStats();
+  }
+
+  /// Update connected count and alerts
+  void _updateStats() {
     _connectedCount = _onlineByStation.values.where((v) => v).length;
     _alertsCount = _calculateAlerts();
     

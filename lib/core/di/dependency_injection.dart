@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import '../network/network_info.dart';
 import '../network/auth_token_storage.dart';
 import '../network/thingsboard_api_client.dart';
+import '../network/thingsboard_websocket_client.dart';
 
 // Features - Auth
 import '../../features/auth/data/datasources/auth_remote_datasource.dart';
@@ -45,6 +46,13 @@ Future<void> initializeDependencies() async {
   sl.registerLazySingleton<ThingsBoardApiClient>(
     () => ThingsBoardApiClient(
       httpClient: sl<http.Client>(),
+      tokenStorage: sl<AuthTokenStorage>(),
+    ),
+  );
+  
+  // Core - ThingsBoard WebSocket Client for real-time telemetry
+  sl.registerLazySingleton<ThingsBoardWebSocketClient>(
+    () => ThingsBoardWebSocketClient(
       tokenStorage: sl<AuthTokenStorage>(),
     ),
   );

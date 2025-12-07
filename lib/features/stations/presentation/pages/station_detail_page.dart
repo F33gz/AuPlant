@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../core/utils/result.dart';
+import '../../../../core/network/thingsboard_websocket_client.dart';
 import '../../domain/entities/station.dart';
 import '../../domain/entities/sensor_data.dart';
 import '../../domain/usecases/get_sensor_data_usecase.dart';
@@ -13,6 +15,7 @@ import '../../../../app/routes/app_routes.dart';
 /// Station Detail Page
 /// 
 /// Displays detailed information about a specific greenhouse station
+/// Uses WebSocket for real-time telemetry updates
 class StationDetailPage extends StatefulWidget {
   final Station station;
 
@@ -27,8 +30,9 @@ class StationDetailPage extends StatefulWidget {
 
 class _StationDetailPageState extends State<StationDetailPage> {
   final GetSensorDataUseCase _getSensorDataUseCase = GetIt.instance<GetSensorDataUseCase>();
+  final ThingsBoardWebSocketClient _wsClient = GetIt.instance<ThingsBoardWebSocketClient>();
   
-  // Real-time sensor data from ThingsBoard API
+  // Real-time sensor data from ThingsBoard WebSocket
   double? _soilHumidity;
   double? _ambientHumidity;
   double? _temperature;
@@ -36,26 +40,89 @@ class _StationDetailPageState extends State<StationDetailPage> {
   bool? _online;
   bool _isLoading = true;
   String? _error;
+  bool _useWebSocket = true;
+  
+  StreamSubscription<TelemetryUpdate>? _wsSubscription;
+  int? _subscriptionCmdId;
 
   @override
   void initState() {
     super.initState();
-    _fetchLive();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    // First fetch initial data via REST API
+    await _fetchLive();
+    
+    // Then try to connect WebSocket for real-time updates
+    if (_useWebSocket) {
+      await _connectWebSocket();
+    }
+  }
+
+  Future<void> _connectWebSocket() async {
+    try {
+      final connected = await _wsClient.connect();
+      if (connected && mounted) {
+        // Subscribe to telemetry updates for this device
+        _subscriptionCmdId = _wsClient.subscribeToDevice(
+          widget.station.id,
+          keys: ['soil', 'hum', 'temp'],
+        );
+        
+        // Listen for updates
+        _wsSubscription = _wsClient.telemetryStream
+            .where((update) => update.deviceId == widget.station.id)
+            .listen(_handleTelemetryUpdate, onError: _handleWebSocketError);
+        
+        if (mounted) {
+          setState(() {
+            _online = true;
+          });
+        }
+      } else {
+        // Fall back to polling if WebSocket fails
+        _startPolling();
+      }
+    } catch (e) {
+      // Fall back to polling
+      _startPolling();
+    }
+  }
+
+  void _handleTelemetryUpdate(TelemetryUpdate update) {
+    if (!mounted) return;
+    
+    setState(() {
+      if (update.soilHumidity != null) _soilHumidity = update.soilHumidity;
+      if (update.ambientHumidity != null) _ambientHumidity = update.ambientHumidity;
+      if (update.temperature != null) _temperature = update.temperature;
+      _lastUpdate = update.timestamp;
+      _online = true;
+      _error = null;
+    });
+  }
+
+  void _handleWebSocketError(dynamic error) {
+    if (!mounted) return;
+    // Fall back to polling on WebSocket error
+    _useWebSocket = false;
     _startPolling();
   }
 
   void _startPolling() async {
-    if (!mounted) return;
+    if (!mounted || _useWebSocket) return;
     Future.doWhile(() async {
       await Future.delayed(const Duration(seconds: 10));
       if (!mounted) return false;
       await _fetchLive();
-      return mounted;
+      return mounted && !_useWebSocket;
     });
   }
 
   Future<void> _fetchLive() async {
-    // Fetch real telemetry data from ThingsBoard
+    // Fetch real telemetry data from ThingsBoard REST API
     final result = await _getSensorDataUseCase.call(widget.station.id);
     
     if (!mounted) return;
@@ -79,6 +146,16 @@ class _StationDetailPageState extends State<StationDetailPage> {
         });
         break;
     }
+  }
+  
+  @override
+  void dispose() {
+    // Unsubscribe from WebSocket
+    if (_subscriptionCmdId != null) {
+      _wsClient.unsubscribeFromDevice(_subscriptionCmdId!);
+    }
+    _wsSubscription?.cancel();
+    super.dispose();
   }
 
   @override
