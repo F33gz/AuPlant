@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../app/theme/app_colors.dart';
-import '../../../features/plants/domain/entities/sensor_data.dart';
+import '../../../features/stations/domain/entities/sensor_data.dart';
 
 class SensorDataCard extends StatelessWidget {
   final SensorData sensorData;
@@ -46,17 +46,17 @@ class SensorDataCard extends StatelessWidget {
                 Expanded(
                   child: _SensorMetric(
                     icon: Icons.water_drop,
-                    label: 'Humedad',
-                    value: '${sensorData.humidity?.toStringAsFixed(1) ?? '--'}%',
+                    label: 'Humedad Suelo',
+                    value: '${sensorData.soilHumidity?.toStringAsFixed(1) ?? '--'}%',
                     color: AppColors.info,
                   ),
                 ),
                 SizedBox(width: 16),
                 Expanded(
                   child: _SensorMetric(
-                    icon: Icons.wb_sunny,
-                    label: 'Luz',
-                    value: '${sensorData.light?.toStringAsFixed(0) ?? '--'} lux',
+                    icon: Icons.cloud,
+                    label: 'Humedad Amb.',
+                    value: '${sensorData.ambientHumidity?.toStringAsFixed(1) ?? '--'}%',
                     color: AppColors.warning,
                   ),
                 ),
@@ -76,10 +76,10 @@ class SensorDataCard extends StatelessWidget {
                 SizedBox(width: 16),
                 Expanded(
                   child: _SensorMetric(
-                    icon: Icons.science,
-                    label: 'pH',
-                    value: '7.0', // Mock pH data
-                    color: AppColors.success,
+                    icon: Icons.circle,
+                    label: 'Estado',
+                    value: sensorData.isOnline ? 'En línea' : 'Desconectado',
+                    color: sensorData.isOnline ? AppColors.success : AppColors.disabled,
                   ),
                 ),
               ],

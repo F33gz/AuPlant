@@ -26,6 +26,7 @@ class _StationDetailPageState extends State<StationDetailPage> {
   double? _soilHumidity;
   double? _ambientHumidity;
   double? _temperature;
+  // ignore: unused_field - Reserved for future UI timestamp display
   DateTime? _lastUpdate;
   bool? _online;
 

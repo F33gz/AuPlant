@@ -22,6 +22,7 @@ class AppColors {
   // Dark palette tokens
   static const Color backgroundDark = Color(0xFF111315);
   static const Color surfaceDark = Color(0xFF1A1C1E);
+  static const Color surfaceLight = Color(0xFFFFFFFF);
   static const Color borderDark = Color(0xFF2B2E31);
 
   // Text colors

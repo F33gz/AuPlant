@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:get_it/get_it.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
+import '../../../../core/utils/result.dart';
+import '../../domain/repositories/auth_repository.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -16,13 +18,23 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final _passwordCtrl = TextEditingController();
   final _passwordConfirmCtrl = TextEditingController();
   bool _loading = false;
+  String? _userName;
 
   @override
   void initState() {
     super.initState();
-    final user = Supabase.instance.client.auth.currentUser;
-    final name = user?.userMetadata?['full_name']?.toString() ?? '';
-    _nameCtrl.text = name;
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    final authRepo = GetIt.instance<AuthRepository>();
+    final result = await authRepo.getCurrentUser();
+    if (result.isSuccess && result.dataOrNull != null && mounted) {
+      setState(() {
+        _userName = result.dataOrNull!.displayName;
+        _nameCtrl.text = _userName ?? '';
+      });
+    }
   }
 
   @override
@@ -36,28 +48,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
-    final client = Supabase.instance.client;
     try {
-      final updates = <String, dynamic>{};
-      final newName = _nameCtrl.text.trim();
-      if (newName.isNotEmpty) {
-        updates['data'] = {'full_name': newName};
-      }
-      final newPass = _passwordCtrl.text.trim();
-      if (newPass.isNotEmpty) {
-        updates['password'] = newPass;
-      }
-      if (updates.isNotEmpty) {
-        await client.auth.updateUser(UserAttributes(
-          password: updates['password'] as String?,
-          data: updates['data'] as Map<String, dynamic>?,
-        ));
-      }
+      // TODO: Implementar actualización de perfil en ThingsBoard
+      // ThingsBoard no permite cambiar datos de usuario desde la app cliente
+      // El cambio de contraseña requiere endpoint admin o flujo de reset
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: const Text('Perfil actualizado'), backgroundColor: AppColors.primaryGreen),
+        const SnackBar(
+          content: Text('Funcionalidad no disponible aún'),
+          backgroundColor: Colors.orange,
+        ),
       );
-      Navigator.of(context).pop(true);
+      Navigator.of(context).pop(false);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

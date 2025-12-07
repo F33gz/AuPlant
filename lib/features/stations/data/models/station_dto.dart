@@ -2,7 +2,7 @@ import '../../domain/entities/station.dart';
 
 /// Data Transfer Object for Station
 /// 
-/// Maps between JSON from Supabase/API and the Station domain entity.
+/// Maps between JSON from ThingsBoard API and the Station domain entity.
 class StationDto {
   final String id;
   final String nombre;
@@ -61,7 +61,6 @@ class StationDto {
       descripcion: json['descripcion'] as String?,
       ubicacion: json['ubicacion'] as String?,
       deviceId: json['device_id'] as String?,
-      // TODO: Update column names when DB schema changes
       minSoilHumidity: readDoubleLocal(['min_humedad_suelo', 'min_humedad']),
       maxSoilHumidity: readDoubleLocal(['max_humedad_suelo', 'max_humedad']),
       minAmbientHumidity: readDoubleLocal(['min_humedad_ambiente']),
@@ -70,6 +69,34 @@ class StationDto {
       maxTemperature: readDoubleLocal(['max_temperatura']),
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
+    );
+  }
+
+  /// Create DTO from ThingsBoard device response
+  factory StationDto.fromThingsBoardJson(Map<String, dynamic> json) {
+    final id = json['id'] as Map<String, dynamic>?;
+    final deviceId = id?['id'] as String? ?? '';
+    
+    // ThingsBoard stores custom attributes separately
+    // For now, use device name and type as basic info
+    return StationDto(
+      id: deviceId,
+      nombre: json['name'] as String? ?? 'Sin nombre',
+      emoji: '🌱', // Default emoji, can be stored in attributes
+      descripcion: json['type'] as String?,
+      ubicacion: json['label'] as String?,
+      deviceId: deviceId,
+      // Thresholds should be loaded from device attributes
+      minSoilHumidity: null,
+      maxSoilHumidity: null,
+      minAmbientHumidity: null,
+      maxAmbientHumidity: null,
+      minTemperature: null,
+      maxTemperature: null,
+      createdAt: json['createdTime'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(json['createdTime'] as int)
+          : DateTime.now(),
+      updatedAt: DateTime.now(),
     );
   }
 

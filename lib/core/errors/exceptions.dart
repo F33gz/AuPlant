@@ -38,3 +38,8 @@ class ValidationException extends AppException {
 class CacheException extends AppException {
   const CacheException(super.message, {super.code});
 }
+
+/// Not found exceptions
+class NotFoundException extends AppException {
+  const NotFoundException(super.message, {super.code});
+}

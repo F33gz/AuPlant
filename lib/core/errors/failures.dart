@@ -40,3 +40,8 @@ class ValidationFailure extends Failure {
 class CacheFailure extends Failure {
   const CacheFailure(super.message, {super.code});
 }
+
+/// Unknown failure
+class UnknownFailure extends Failure {
+  const UnknownFailure(super.message, {super.code});
+}

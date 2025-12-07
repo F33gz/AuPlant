@@ -1,8 +1,8 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/network/thingsboard_api_client.dart';
 import '../../../../core/errors/exceptions.dart' as core_exceptions;
 import '../models/station_dto.dart';
 
-/// Remote data source for station operations
+/// Remote data source for station operations using ThingsBoard
 abstract class StationRemoteDataSource {
   Future<List<StationDto>> getUserStations();
   Future<StationDto> getStationById(String stationId);
@@ -31,22 +31,19 @@ abstract class StationRemoteDataSource {
   Stream<List<StationDto>> watchUserStations();
 }
 
-/// Implementation of StationRemoteDataSource using Supabase
+/// Implementation of StationRemoteDataSource using ThingsBoard API
 class StationRemoteDataSourceImpl implements StationRemoteDataSource {
-  final SupabaseClient supabaseClient;
+  final ThingsBoardApiClient apiClient;
 
-  StationRemoteDataSourceImpl({required this.supabaseClient});
+  StationRemoteDataSourceImpl({required this.apiClient});
 
   @override
   Future<List<StationDto>> getUserStations() async {
     try {
-      // TODO: Update table name when DB schema changes (plantas -> estaciones)
-      final response = await supabaseClient
-          .from('plantas')
-          .select('*')
-          .order('created_at', ascending: false);
-
-      return response.map<StationDto>((json) => StationDto.fromJson(json)).toList();
+      // TODO: Implementar obtención de dispositivos del usuario desde ThingsBoard
+      // Endpoint: GET /api/customer/{customerId}/devices?pageSize=100&page=0
+      // Por ahora retornamos lista vacía
+      return [];
     } catch (e) {
       throw core_exceptions.ServerException('Error fetching stations: $e');
     }
@@ -55,14 +52,10 @@ class StationRemoteDataSourceImpl implements StationRemoteDataSource {
   @override
   Future<StationDto> getStationById(String stationId) async {
     try {
-      // TODO: Update table name when DB schema changes
-      final response = await supabaseClient
-          .from('plantas')
-          .select('*')
-          .eq('id', stationId)
-          .single();
-
-      return StationDto.fromJson(response);
+      // TODO: Implementar obtención de dispositivo específico desde ThingsBoard
+      // Endpoint: GET /api/device/{deviceId}
+      final response = await apiClient.get('/device/$stationId');
+      return StationDto.fromThingsBoardJson(response);
     } catch (e) {
       throw core_exceptions.ServerException('Error fetching station: $e');
     }
@@ -77,26 +70,10 @@ class StationRemoteDataSourceImpl implements StationRemoteDataSource {
     String? location,
   }) async {
     try {
-      final session = supabaseClient.auth.currentSession;
-      if (session == null) {
-        throw core_exceptions.AuthException('User not authenticated');
-      }
-
-      // TODO: Update table name and column names when DB schema changes
-      final response = await supabaseClient
-          .from('plantas')
-          .insert({
-            'nombre': name,
-            'emoji': emoji ?? '🌱',
-            'descripcion': description,
-            'device_id': deviceId,
-            'ubicacion': location,
-            'user_id': session.user.id,
-          })
-          .select()
-          .single();
-
-      return StationDto.fromJson(response);
+      // TODO: Implementar creación de dispositivo en ThingsBoard
+      // Por ahora, solo verificamos que el deviceId existe en ThingsBoard
+      // y lo asociamos con metadata local
+      throw core_exceptions.ServerException('Station creation via app not supported yet');
     } catch (e) {
       throw core_exceptions.ServerException('Error adding station: $e');
     }
@@ -118,52 +95,22 @@ class StationRemoteDataSourceImpl implements StationRemoteDataSource {
     double? maxTemperature,
   }) async {
     try {
-      final session = supabaseClient.auth.currentSession;
-      if (session == null) {
-        throw core_exceptions.AuthException('User not authenticated');
-      }
-
+      // TODO: Implementar actualización de atributos del dispositivo en ThingsBoard
+      // Endpoint: POST /api/plugins/telemetry/DEVICE/{deviceId}/attributes/SHARED
       final updateData = <String, dynamic>{};
-      if (name != null) updateData['nombre'] = name;
+      if (name != null) updateData['name'] = name;
       if (emoji != null) updateData['emoji'] = emoji;
-      if (description != null) updateData['descripcion'] = description;
-      if (deviceId != null) updateData['device_id'] = deviceId;
-      if (location != null) updateData['ubicacion'] = location;
-      // TODO: Update column names when DB schema changes
-      if (minSoilHumidity != null) updateData['min_humedad_suelo'] = minSoilHumidity;
-      if (maxSoilHumidity != null) updateData['max_humedad_suelo'] = maxSoilHumidity;
-      if (minAmbientHumidity != null) updateData['min_humedad_ambiente'] = minAmbientHumidity;
-      if (maxAmbientHumidity != null) updateData['max_humedad_ambiente'] = maxAmbientHumidity;
-      if (minTemperature != null) updateData['min_temperatura'] = minTemperature;
-      if (maxTemperature != null) updateData['max_temperatura'] = maxTemperature;
+      if (description != null) updateData['description'] = description;
+      if (location != null) updateData['location'] = location;
+      if (minSoilHumidity != null) updateData['minSoilHumidity'] = minSoilHumidity;
+      if (maxSoilHumidity != null) updateData['maxSoilHumidity'] = maxSoilHumidity;
+      if (minAmbientHumidity != null) updateData['minAmbientHumidity'] = minAmbientHumidity;
+      if (maxAmbientHumidity != null) updateData['maxAmbientHumidity'] = maxAmbientHumidity;
+      if (minTemperature != null) updateData['minTemperature'] = minTemperature;
+      if (maxTemperature != null) updateData['maxTemperature'] = maxTemperature;
 
-      // TODO: Update edge function name when backend changes
-      final response = await supabaseClient.functions.invoke(
-        'modify_plant',
-        body: {
-          'action': 'update',
-          'plantId': stationId,
-          'updateData': updateData,
-        },
-        headers: {
-          'Authorization': 'Bearer ${session.accessToken}',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.data == null || response.data['success'] != true) {
-        throw core_exceptions.ServerException('Error updating station: ${response.data?['error'] ?? 'Unknown error'}');
-      }
-
-      // Refresh the model from the database
-      // TODO: Update table name when DB schema changes
-      final refreshed = await supabaseClient
-          .from('plantas')
-          .select()
-          .eq('id', stationId)
-          .single();
-
-      return StationDto.fromJson(refreshed);
+      // TODO: Conectar con API real
+      throw core_exceptions.ServerException('Station update via app not supported yet');
     } catch (e) {
       throw core_exceptions.ServerException('Error updating station: $e');
     }
@@ -172,27 +119,8 @@ class StationRemoteDataSourceImpl implements StationRemoteDataSource {
   @override
   Future<void> deleteStation(String stationId) async {
     try {
-      final session = supabaseClient.auth.currentSession;
-      if (session == null) {
-        throw core_exceptions.AuthException('User not authenticated');
-      }
-
-      // TODO: Update edge function name when backend changes
-      final response = await supabaseClient.functions.invoke(
-        'modify_plant',
-        body: {
-          'action': 'delete',
-          'plantId': stationId,
-        },
-        headers: {
-          'Authorization': 'Bearer ${session.accessToken}',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.data == null || response.data['success'] != true) {
-        throw core_exceptions.ServerException('Error deleting station: ${response.data?['error'] ?? 'Unknown error'}');
-      }
+      // TODO: Implementar eliminación o desasociación del dispositivo
+      throw core_exceptions.ServerException('Station deletion via app not supported yet');
     } catch (e) {
       throw core_exceptions.ServerException('Error deleting station: $e');
     }
@@ -200,15 +128,12 @@ class StationRemoteDataSourceImpl implements StationRemoteDataSource {
 
   @override
   Stream<List<StationDto>> watchUserStations() {
-    try {
-      // TODO: Update table name when DB schema changes
-      return supabaseClient
-          .from('plantas')
-          .stream(primaryKey: ['id'])
-          .order('created_at', ascending: false)
-          .map((data) => data.map<StationDto>((json) => StationDto.fromJson(json)).toList());
-    } catch (e) {
-      throw core_exceptions.ServerException('Error watching stations: $e');
-    }
+    // TODO: Implementar WebSocket o polling para actualizaciones en tiempo real
+    // Por ahora, emitimos un stream que hace polling cada 30 segundos
+    return Stream.periodic(
+      const Duration(seconds: 30),
+      (_) => getUserStations(),
+    ).asyncMap((future) => future);
   }
 }
+

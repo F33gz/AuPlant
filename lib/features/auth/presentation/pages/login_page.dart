@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:get_it/get_it.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/utils/result.dart';
 import '../../../../shared/constants/ui_constants.dart';
+import '../../domain/repositories/auth_repository.dart';
 import '../widgets/auth_logo.dart';
 import '../widgets/login_form_widget.dart';
 import '../widgets/auth_actions.dart';
 
-/// Login Page - Refactored and Much Shorter
+/// Login Page - ThingsBoard Authentication
 /// 
-/// Only handles page structure and navigation.
-/// All form logic is extracted to separate widgets.
+/// Handles user login using ThingsBoard API.
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -50,23 +51,29 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
     
     try {
-      final response = await Supabase.instance.client.auth.signInWithPassword(
+      final authRepository = GetIt.instance<AuthRepository>();
+      final result = await authRepository.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
       
-      if (response.session != null && mounted) {
-        Navigator.pushReplacementNamed(context, '/');
-      }
-    } on AuthException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error de login: ${e.message}'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
+      result.when(
+        success: (user) {
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, '/');
+          }
+        },
+        failure: (failure) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error de login: ${failure.message}'),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          }
+        },
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -81,3 +88,4 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 }
+

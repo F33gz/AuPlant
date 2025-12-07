@@ -1,24 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../shared/constants/ui_constants.dart';
 import '../widgets/auth_logo.dart';
-import '../widgets/signup_form_widget.dart';
 
-/// Signup Page - Clean and Focused
+/// Signup Page - Informational
 /// 
-/// Only handles page structure and navigation.
-/// All form logic is extracted to separate widgets.
-class SignupPage extends StatefulWidget {
+/// ThingsBoard does not support self-registration.
+/// Users must be created by an administrator.
+class SignupPage extends StatelessWidget {
   const SignupPage({super.key});
-
-  @override
-  State<SignupPage> createState() => _SignupPageState();
-}
-
-class _SignupPageState extends State<SignupPage> {
-  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -47,13 +38,10 @@ class _SignupPageState extends State<SignupPage> {
                   color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
                 ),
               ),
+              const SizedBox(height: UIConstants.spacingXXL),
+              _buildInfoCard(context, isDark),
               const SizedBox(height: UIConstants.spacingXL),
-              SignupFormWidget(
-                onSignup: _handleSignup,
-                isLoading: _isLoading,
-              ),
-              const SizedBox(height: UIConstants.spacingL),
-              _buildLoginPrompt(),
+              _buildLoginPrompt(context),
             ],
           ),
         ),
@@ -61,7 +49,57 @@ class _SignupPageState extends State<SignupPage> {
     );
   }
 
-  Widget _buildLoginPrompt() {
+  Widget _buildInfoCard(BuildContext context, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(UIConstants.paddingXL),
+      decoration: BoxDecoration(
+        color: isDark 
+            ? AppColors.surfaceDark 
+            : AppColors.surfaceLight,
+        borderRadius: BorderRadius.circular(UIConstants.radiusL),
+        border: Border.all(
+          color: AppColors.primaryGreen.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.info_outline,
+            size: 64,
+            color: AppColors.primaryGreen,
+          ),
+          const SizedBox(height: UIConstants.spacingL),
+          Text(
+            'Registro no disponible',
+            style: AppTextStyles.headlineSmall.copyWith(
+              color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: UIConstants.spacingM),
+          Text(
+            'El registro de nuevas cuentas debe ser realizado por un administrador del sistema.',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: isDark ? AppColors.textOnDark.withValues(alpha: 0.7) : AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: UIConstants.spacingM),
+          Text(
+            'Por favor, contacta al administrador para solicitar acceso.',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: isDark ? AppColors.textOnDark.withValues(alpha: 0.7) : AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoginPrompt(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -81,48 +119,5 @@ class _SignupPageState extends State<SignupPage> {
         ),
       ],
     );
-  }
-
-  Future<void> _handleSignup(String name, String email, String password) async {
-    setState(() => _isLoading = true);
-    
-    try {
-      final response = await Supabase.instance.client.auth.signUp(
-        email: email,
-        password: password,
-        data: {'full_name': name},
-      );
-      
-      if (response.session != null && mounted) {
-        Navigator.pushReplacementNamed(context, '/');
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Por favor verifica tu correo electrónico'),
-            backgroundColor: AppColors.primaryGreen,
-          ),
-        );
-      }
-    } on AuthException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error de registro: ${e.message}'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error de registro: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
   }
 }

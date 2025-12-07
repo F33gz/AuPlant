@@ -65,6 +65,50 @@ class SensorDataDto {
     );
   }
 
+  /// Create DTO from ThingsBoard telemetry response
+  /// Response format: { "soilHumidity": [{"ts": 1234, "value": "50"}], ... }
+  factory SensorDataDto.fromThingsBoardJson(String stationId, Map<String, dynamic> json) {
+    // Extract latest values from telemetry arrays
+    double? getLatestValue(String key) {
+      final data = json[key] as List<dynamic>?;
+      if (data == null || data.isEmpty) return null;
+      final latest = data.first as Map<String, dynamic>?;
+      if (latest == null) return null;
+      return _parseDouble(latest['value']);
+    }
+
+    // Extract recent readings from telemetry arrays
+    List<SensorDataPointDto> getReadings(String key) {
+      final data = json[key] as List<dynamic>?;
+      if (data == null) return [];
+      return data.map<SensorDataPointDto>((item) {
+        final point = item as Map<String, dynamic>;
+        return SensorDataPointDto(
+          timestamp: DateTime.fromMillisecondsSinceEpoch(
+            (point['ts'] as num?)?.toInt() ?? 0,
+          ),
+          value: _parseDouble(point['value']) ?? 0.0,
+        );
+      }).toList();
+    }
+
+    return SensorDataDto(
+      stationId: stationId,
+      nombre: '', // Would need to be fetched from device info
+      emoji: '🌱',
+      descripcion: '',
+      ubicacion: '',
+      soilHumidity: getLatestValue('soilHumidity'),
+      ambientHumidity: getLatestValue('ambientHumidity'),
+      temperature: getLatestValue('temperature'),
+      deviceId: stationId,
+      online: json.isNotEmpty,
+      recentSoilHumidityReadings: getReadings('soilHumidity'),
+      recentAmbientHumidityReadings: getReadings('ambientHumidity'),
+      recentTemperatureReadings: getReadings('temperature'),
+    );
+  }
+
   /// Convert DTO to domain entity
   SensorData toEntity() {
     return SensorData(

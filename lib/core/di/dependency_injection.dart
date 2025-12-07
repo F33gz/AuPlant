@@ -1,9 +1,16 @@
 import 'package:get_it/get_it.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:http/http.dart' as http;
 
 // Core
 import '../network/network_info.dart';
+import '../network/auth_token_storage.dart';
+import '../network/thingsboard_api_client.dart';
+
+// Features - Auth
+import '../../features/auth/data/datasources/auth_remote_datasource.dart';
+import '../../features/auth/data/repositories/auth_repository_impl.dart';
+import '../../features/auth/domain/repositories/auth_repository.dart';
 
 // Features - Stations (greenhouse monitoring)
 import '../../features/stations/data/datasources/station_remote_datasource.dart';
@@ -21,24 +28,55 @@ final GetIt sl = GetIt.instance;
 /// Initialize dependency injection
 Future<void> initializeDependencies() async {
   // External dependencies
-  sl.registerLazySingleton<SupabaseClient>(() => Supabase.instance.client);
+  sl.registerLazySingleton<http.Client>(() => http.Client());
   sl.registerLazySingleton<Connectivity>(() => Connectivity());
 
-  // Core
+  // Core - Network
   sl.registerLazySingleton<NetworkInfo>(
     () => NetworkInfoImpl(sl<Connectivity>()),
   );
+  
+  // Core - Auth Token Storage
+  sl.registerLazySingleton<AuthTokenStorage>(
+    () => AuthTokenStorageImpl(),
+  );
+  
+  // Core - ThingsBoard API Client
+  sl.registerLazySingleton<ThingsBoardApiClient>(
+    () => ThingsBoardApiClient(
+      httpClient: sl<http.Client>(),
+      tokenStorage: sl<AuthTokenStorage>(),
+    ),
+  );
 
-  // Data sources
+  // Auth - Data sources
+  sl.registerLazySingleton<AuthRemoteDataSource>(
+    () => AuthRemoteDataSourceImpl(
+      apiClient: sl<ThingsBoardApiClient>(),
+    ),
+  );
+
+  // Auth - Repositories
+  sl.registerLazySingleton<AuthRepository>(
+    () => AuthRepositoryImpl(
+      remoteDataSource: sl<AuthRemoteDataSource>(),
+    ),
+  );
+
+  // Stations - Data sources
   sl.registerLazySingleton<StationRemoteDataSource>(
-    () => StationRemoteDataSourceImpl(supabaseClient: sl<SupabaseClient>()),
+    () => StationRemoteDataSourceImpl(
+      apiClient: sl<ThingsBoardApiClient>(),
+    ),
   );
   
   sl.registerLazySingleton<SensorRemoteDataSource>(
-    () => SensorRemoteDataSourceImpl(supabaseClient: sl<SupabaseClient>()),
+    () => SensorRemoteDataSourceImpl(
+      apiClient: sl<ThingsBoardApiClient>(),
+    ),
   );
 
-  // Repositories
+  // Stations - Repositories
   sl.registerLazySingleton<StationRepository>(
     () => StationRepositoryImpl(
       stationRemoteDataSource: sl<StationRemoteDataSource>(),
@@ -46,7 +84,7 @@ Future<void> initializeDependencies() async {
     ),
   );
 
-  // Use cases
+  // Stations - Use cases
   sl.registerLazySingleton(() => GetStationsUseCase(sl<StationRepository>()));
   sl.registerLazySingleton(() => AddStationUseCase(sl<StationRepository>()));
   sl.registerLazySingleton(() => GetSensorDataUseCase(sl<StationRepository>()));
@@ -58,3 +96,4 @@ Future<void> initializeDependencies() async {
 Future<void> resetDependencies() async {
   await sl.reset();
 }
+

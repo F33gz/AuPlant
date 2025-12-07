@@ -37,8 +37,9 @@ dependencies:
   flutter_svg: ^2.0.10
   fl_chart: ^0.68.0
 
-  # Backend & Database
-  supabase_flutter: ^2.5.2
+  # Backend & IoT Platform
+  # ThingsBoard API (via http package)
+  # supabase_flutter removed - now using ThingsBoard
 
   # Architecture & State Management
   flutter_bloc: ^8.1.3
@@ -48,6 +49,7 @@ dependencies:
 
   # Network & Connectivity
   connectivity_plus: ^5.0.2
+  http: ^1.2.0
 
   # Utilities
   intl: ^0.19.0

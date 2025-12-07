@@ -3,6 +3,12 @@ import '../errors/failures.dart';
 /// A generic result type for handling success and failure cases
 sealed class Result<T> {
   const Result();
+
+  /// Create a success result
+  static Result<T> success<T>(T data) => Success<T>(data);
+
+  /// Create a failure result
+  static Result<T> failure<T>(Failure failure) => Error<T>(failure);
 }
 
 /// Success result containing data
@@ -53,4 +59,17 @@ extension ResultExtension<T> on Result<T> {
     Success<T> success => onSuccess(success.data),
     Error<T> error => onError(error.failure),
   };
+
+  /// Handle success and failure with named callbacks (freezed-like API)
+  void when({
+    required void Function(T data) success,
+    required void Function(Failure failure) failure,
+  }) {
+    switch (this) {
+      case Success<T> s:
+        success(s.data);
+      case Error<T> e:
+        failure(e.failure);
+    }
+  }
 }

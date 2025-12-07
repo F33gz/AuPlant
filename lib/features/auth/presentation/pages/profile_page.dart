@@ -1,17 +1,42 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:get_it/get_it.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
+import '../../../../core/utils/result.dart';
 import '../../../../shared/constants/ui_constants.dart';
 import '../../../../app/routes/app_routes.dart';
 import '../../../../shared/widgets/theme_mode_selector.dart';
+import '../../domain/repositories/auth_repository.dart';
+import '../../domain/entities/user.dart' as app_user;
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  app_user.User? _user;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    final authRepo = GetIt.instance<AuthRepository>();
+    final result = await authRepo.getCurrentUser();
+    if (result.isSuccess && mounted) {
+      setState(() {
+        _user = result.dataOrNull;
+      });
+    }
+  }
 
   Future<void> _logout(BuildContext context) async {
     try {
-      // Mostrar indicador de carga
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -20,15 +45,13 @@ class ProfilePage extends StatelessWidget {
         ),
       );
 
-      // Cerrar sesión en Supabase
-      await Supabase.instance.client.auth.signOut();
+      final authRepo = GetIt.instance<AuthRepository>();
+      await authRepo.signOut();
       
-      // Cerrar indicador de carga si el context sigue montado
       if (context.mounted) {
-        Navigator.of(context).pop(); // Cerrar loading dialog
+        Navigator.of(context).pop();
       }
 
-      // Navegar a login si el context sigue montado
       if (context.mounted) {
         Navigator.of(context).pushNamedAndRemoveUntil(
           AppRoutes.login,
@@ -36,9 +59,8 @@ class ProfilePage extends StatelessWidget {
         );
       }
     } catch (e) {
-      // En caso de error, cerrar loading dialog y mostrar error
       if (context.mounted) {
-        Navigator.of(context).pop(); // Cerrar loading dialog
+        Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error al cerrar sesión: $e'),
@@ -53,7 +75,6 @@ class ProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final user = Supabase.instance.client.auth.currentUser;
     
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -75,7 +96,7 @@ class ProfilePage extends StatelessWidget {
           child: Column(
             children: [
               const SizedBox(height: UIConstants.spacingXL),
-              _buildProfileHeader(user),
+              _buildProfileHeader(_user),
               const SizedBox(height: UIConstants.spacingXXL),
               _buildProfileOptions(context),
               const Spacer(),
@@ -88,7 +109,7 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileHeader(User? user) {
+  Widget _buildProfileHeader(app_user.User? user) {
     return Column(
       children: [
         // Avatar
@@ -113,7 +134,7 @@ class ProfilePage extends StatelessWidget {
         
         // User name
         Text(
-          user?.userMetadata?['full_name'] ?? 'Usuario',
+          user?.displayName ?? 'Usuario',
           style: AppTextStyles.headlineMedium.copyWith(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.w600,

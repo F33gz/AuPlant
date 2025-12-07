@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:get_it/get_it.dart';
 import 'app_routes.dart';
+import '../../core/network/thingsboard_api_client.dart';
 import '../../features/main/presentation/pages/main_page.dart';
 import '../../features/stations/presentation/pages/stations_overview_page.dart';
 import '../../features/stations/presentation/pages/station_detail_page.dart';
@@ -25,18 +26,26 @@ class RouteGenerator {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case AppRoutes.root:
-        final session = Supabase.instance.client.auth.currentSession;
-        if (session != null) {
-          return MaterialPageRoute(
-            builder: (_) => const MainPage(),
-            settings: settings,
-          );
-        } else {
-          return MaterialPageRoute(
-            builder: (_) => const LoginPage(),
-            settings: settings,
-          );
-        }
+        // Check ThingsBoard authentication
+        return MaterialPageRoute(
+          builder: (_) => FutureBuilder<bool>(
+            future: _checkAuthentication(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              }
+              final isAuthenticated = snapshot.data ?? false;
+              if (isAuthenticated) {
+                return const MainPage();
+              } else {
+                return const LoginPage();
+              }
+            },
+          ),
+          settings: settings,
+        );
 
       case AppRoutes.stationsOverview:
       case '/plants': // Legacy route support
@@ -201,5 +210,15 @@ class RouteGenerator {
         );
       },
     );
+  }
+
+  /// Check if user is authenticated via ThingsBoard
+  static Future<bool> _checkAuthentication() async {
+    try {
+      final apiClient = GetIt.instance<ThingsBoardApiClient>();
+      return await apiClient.isAuthenticated();
+    } catch (e) {
+      return false;
+    }
   }
 }
