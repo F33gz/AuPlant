@@ -15,11 +15,21 @@ class AppRoutes {
   static const String signup = '/signup';
   static const String forgotPassword = '/forgot-password';
 
-  // Plant routes
-  static const String plantsOverview = '/plants';
-  static const String plantDetail = '/plant-detail';
-  static const String addPlant = '/add-plant';
-  static const String plantSettings = '/plant-settings';
+  // Station routes (greenhouse monitoring stations)
+  static const String stationsOverview = '/stations';
+  static const String stationDetail = '/station-detail';
+  static const String addStation = '/add-station';
+  static const String stationSettings = '/station-settings';
+
+  // Legacy plant routes - redirects to station routes
+  @Deprecated('Use stationsOverview instead')
+  static const String plantsOverview = '/stations';
+  @Deprecated('Use stationDetail instead')
+  static const String plantDetail = '/station-detail';
+  @Deprecated('Use addStation instead')
+  static const String addPlant = '/add-station';
+  @Deprecated('Use stationSettings instead')
+  static const String plantSettings = '/station-settings';
 
   // Settings routes
   static const String settings = '/settings';

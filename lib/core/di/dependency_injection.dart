@@ -5,16 +5,16 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 // Core
 import '../network/network_info.dart';
 
-// Features - Plants
-import '../../features/plants/data/datasources/plant_remote_datasource.dart';
-import '../../features/plants/data/datasources/sensor_remote_datasource.dart';
-import '../../features/plants/data/repositories/plant_repository_impl.dart';
-import '../../features/plants/domain/repositories/plant_repository.dart';
-import '../../features/plants/domain/usecases/get_plants_usecase.dart';
-import '../../features/plants/domain/usecases/add_plant_usecase.dart';
-import '../../features/plants/domain/usecases/get_sensor_data_usecase.dart';
-import '../../features/plants/domain/usecases/update_plant_usecase.dart';
-import '../../features/plants/domain/usecases/delete_plant_usecase.dart';
+// Features - Stations (greenhouse monitoring)
+import '../../features/stations/data/datasources/station_remote_datasource.dart';
+import '../../features/stations/data/datasources/sensor_remote_datasource.dart';
+import '../../features/stations/data/repositories/station_repository_impl.dart';
+import '../../features/stations/domain/repositories/station_repository.dart';
+import '../../features/stations/domain/usecases/get_stations_usecase.dart';
+import '../../features/stations/domain/usecases/add_station_usecase.dart';
+import '../../features/stations/domain/usecases/get_sensor_data_usecase.dart';
+import '../../features/stations/domain/usecases/update_station_usecase.dart';
+import '../../features/stations/domain/usecases/delete_station_usecase.dart';
 
 final GetIt sl = GetIt.instance;
 
@@ -30,8 +30,8 @@ Future<void> initializeDependencies() async {
   );
 
   // Data sources
-  sl.registerLazySingleton<PlantRemoteDataSource>(
-    () => PlantRemoteDataSourceImpl(supabaseClient: sl<SupabaseClient>()),
+  sl.registerLazySingleton<StationRemoteDataSource>(
+    () => StationRemoteDataSourceImpl(supabaseClient: sl<SupabaseClient>()),
   );
   
   sl.registerLazySingleton<SensorRemoteDataSource>(
@@ -39,19 +39,19 @@ Future<void> initializeDependencies() async {
   );
 
   // Repositories
-  sl.registerLazySingleton<PlantRepository>(
-    () => PlantRepositoryImpl(
-      plantRemoteDataSource: sl<PlantRemoteDataSource>(),
+  sl.registerLazySingleton<StationRepository>(
+    () => StationRepositoryImpl(
+      stationRemoteDataSource: sl<StationRemoteDataSource>(),
       sensorRemoteDataSource: sl<SensorRemoteDataSource>(),
     ),
   );
 
   // Use cases
-  sl.registerLazySingleton(() => GetPlantsUseCase(sl<PlantRepository>()));
-  sl.registerLazySingleton(() => AddPlantUseCase(sl<PlantRepository>()));
-  sl.registerLazySingleton(() => GetSensorDataUseCase(sl<PlantRepository>()));
-  sl.registerLazySingleton(() => UpdatePlantUseCase(sl<PlantRepository>()));
-  sl.registerLazySingleton(() => DeletePlantUseCase(sl<PlantRepository>()));
+  sl.registerLazySingleton(() => GetStationsUseCase(sl<StationRepository>()));
+  sl.registerLazySingleton(() => AddStationUseCase(sl<StationRepository>()));
+  sl.registerLazySingleton(() => GetSensorDataUseCase(sl<StationRepository>()));
+  sl.registerLazySingleton(() => UpdateStationUseCase(sl<StationRepository>()));
+  sl.registerLazySingleton(() => DeleteStationUseCase(sl<StationRepository>()));
 }
 
 /// Reset all dependencies (useful for testing)

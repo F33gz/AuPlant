@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../shared/constants/ui_constants.dart';
-import '../../../plants/presentation/pages/plants_overview_page.dart';
+import '../../../stations/presentation/pages/stations_overview_page.dart';
 import '../../../auth/presentation/pages/profile_page.dart';
 
 /// Main Page with Bottom Navigation
 /// 
 /// The main entry point of the application featuring bottom navigation
-/// to switch between different sections: Plants, Monitoring, and Profile.
+/// to switch between different sections: Stations and Profile.
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
 
@@ -21,7 +21,7 @@ class _MainPageState extends State<MainPage> {
 
   // List of pages for each tab
   final List<Widget> _pages = [
-    const PlantsOverviewPage(),
+    const StationsOverviewPage(),
     const ProfilePage(),
   ];
 
@@ -57,8 +57,8 @@ class _MainPageState extends State<MainPage> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildNavItem(
-                  icon: Icons.eco,
-                  label: 'Plantas',
+                  icon: Icons.home_work_outlined,
+                  label: 'Estaciones',
                   index: 0,
                 ),
                 _buildNavItem(

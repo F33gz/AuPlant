@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app_routes.dart';
 import '../../features/main/presentation/pages/main_page.dart';
-import '../../features/plants/presentation/pages/plants_overview_page.dart';
-import '../../features/plants/presentation/pages/plant_detail_page.dart';
-import '../../features/plants/presentation/pages/add_plant_page.dart';
-import '../../features/plants/presentation/pages/plant_settings_page.dart';
+import '../../features/stations/presentation/pages/stations_overview_page.dart';
+import '../../features/stations/presentation/pages/station_detail_page.dart';
+import '../../features/stations/presentation/pages/add_station_page.dart';
+import '../../features/stations/presentation/pages/station_settings_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/signup_page.dart';
 import '../../features/auth/presentation/pages/edit_profile_page.dart';
 import '../../features/auth/presentation/pages/notifications_page.dart';
-import '../../features/plants/domain/entities/plant.dart';
+import '../../features/stations/domain/entities/station.dart';
 
 /// Route Generator
 /// 
@@ -38,33 +38,37 @@ class RouteGenerator {
           );
         }
 
-      case AppRoutes.plantsOverview:
+      case AppRoutes.stationsOverview:
+      case '/plants': // Legacy route support
         return MaterialPageRoute(
-          builder: (_) => const PlantsOverviewPage(),
+          builder: (_) => const StationsOverviewPage(),
           settings: settings,
         );
 
-      case AppRoutes.plantDetail:
+      case AppRoutes.stationDetail:
+      case '/plant-detail': // Legacy route support
         final args = settings.arguments;
-        if (args is Plant) {
+        if (args is Station) {
           return MaterialPageRoute(
-            builder: (_) => PlantDetailPage(plant: args),
+            builder: (_) => StationDetailPage(station: args),
             settings: settings,
           );
         }
         return _errorRoute(settings);
 
-      case AppRoutes.addPlant:
+      case AppRoutes.addStation:
+      case '/add-plant': // Legacy route support
         return MaterialPageRoute(
-          builder: (_) => const AddPlantPage(),
+          builder: (_) => const AddStationPage(),
           settings: settings,
         );
 
-      case AppRoutes.plantSettings:
+      case AppRoutes.stationSettings:
+      case '/plant-settings': // Legacy route support
         final args = settings.arguments;
-        if (args is Plant) {
+        if (args is Station) {
           return MaterialPageRoute(
-            builder: (_) => PlantSettingsPage(plant: args),
+            builder: (_) => StationSettingsPage(station: args),
             settings: settings,
           );
         }
@@ -128,7 +132,7 @@ class RouteGenerator {
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil(
-                  AppRoutes.plantsOverview,
+                  AppRoutes.stationsOverview,
                   (route) => false,
                 ),
                 child: const Text('Volver al inicio'),
