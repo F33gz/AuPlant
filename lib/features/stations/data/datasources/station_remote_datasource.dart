@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../../../../core/network/thingsboard_api_client.dart';
 import '../../../../core/errors/exceptions.dart' as core_exceptions;
 import '../models/station_dto.dart';
@@ -40,22 +42,71 @@ class StationRemoteDataSourceImpl implements StationRemoteDataSource {
   @override
   Future<List<StationDto>> getUserStations() async {
     try {
-      // TODO: Implementar obtención de dispositivos del usuario desde ThingsBoard
-      // Endpoint: GET /api/customer/{customerId}/devices?pageSize=100&page=0
-      // Por ahora retornamos lista vacía
-      return [];
+      // First get the customerId from the current user's token
+      final tokens = await apiClient.getCurrentTokens();
+      if (tokens == null) {
+        throw core_exceptions.AuthException('No hay sesión activa');
+      }
+      
+      // Extract customerId from JWT token
+      final customerId = _extractCustomerIdFromToken(tokens.token);
+      if (customerId == null) {
+        throw core_exceptions.ServerException('No se pudo obtener el customerId del usuario');
+      }
+      
+      // Get devices for this customer
+      // Endpoint: GET /api/customer/{customerId}/deviceInfos?pageSize=100&page=0
+      final response = await apiClient.get(
+        '/customer/$customerId/deviceInfos?pageSize=100&page=0&sortProperty=createdTime&sortOrder=DESC',
+      );
+      
+      final data = response['data'] as List<dynamic>?;
+      if (data == null) return [];
+      
+      return data
+          .map((device) => StationDto.fromThingsBoardDeviceInfo(device as Map<String, dynamic>))
+          .toList();
+    } on core_exceptions.AuthException {
+      rethrow;
     } catch (e) {
       throw core_exceptions.ServerException('Error fetching stations: $e');
     }
   }
 
+  /// Extract customerId from JWT token payload
+  String? _extractCustomerIdFromToken(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return null;
+      
+      // Parse JWT payload as JSON
+      final jsonStr = _decodeBase64(parts[1]);
+      final json = Map<String, dynamic>.from(
+        const JsonDecoder().convert(jsonStr) as Map,
+      );
+      return json['customerId'] as String?;
+    } catch (_) {
+      return null;
+    }
+  }
+  
+  String _decodeBase64(String str) {
+    String output = str.replaceAll('-', '+').replaceAll('_', '/');
+    switch (output.length % 4) {
+      case 0: break;
+      case 2: output += '=='; break;
+      case 3: output += '='; break;
+      default: throw Exception('Invalid base64 string');
+    }
+    return String.fromCharCodes(base64Decode(output));
+  }
+
   @override
   Future<StationDto> getStationById(String stationId) async {
     try {
-      // TODO: Implementar obtención de dispositivo específico desde ThingsBoard
       // Endpoint: GET /api/device/{deviceId}
       final response = await apiClient.get('/device/$stationId');
-      return StationDto.fromThingsBoardJson(response);
+      return StationDto.fromThingsBoardDeviceInfo(response);
     } catch (e) {
       throw core_exceptions.ServerException('Error fetching station: $e');
     }

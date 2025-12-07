@@ -8,7 +8,9 @@ import '../../../../shared/widgets/empty_state_widget.dart';
 import '../widgets/overview_stat_card.dart';
 import '../widgets/station_overview_tile.dart';
 import '../../domain/entities/station.dart';
+import '../../domain/entities/sensor_data.dart';
 import '../../domain/usecases/get_stations_usecase.dart';
+import '../../domain/usecases/get_sensor_data_usecase.dart';
 
 /// Stations Overview Page
 /// 
@@ -22,12 +24,13 @@ class StationsOverviewPage extends StatefulWidget {
 
 class _StationsOverviewPageState extends State<StationsOverviewPage> {
   final GetStationsUseCase _getStationsUseCase = GetIt.instance<GetStationsUseCase>();
+  final GetSensorDataUseCase _getSensorDataUseCase = GetIt.instance<GetSensorDataUseCase>();
   
   List<Station> _stations = [];
   bool _isLoading = true;
   String? _error;
   
-  // TODO: Wire to real sensor data from API
+  // Live sensor data from ThingsBoard API
   final Map<String, double> _liveSoilHumidityByStation = {};
   final Map<String, double> _liveAmbientHumidityByStation = {};
   final Map<String, double> _liveTemperatureByStation = {};
@@ -67,25 +70,68 @@ class _StationsOverviewPageState extends State<StationsOverviewPage> {
   }
 
   Future<void> _loadLiveData() async {
-    // TODO: Implement real-time data fetching from API
-    // For now, simulate with placeholder values
+    // Load telemetry data for each station from ThingsBoard
     for (final station in _stations) {
-      setState(() {
-        // Placeholder values - replace with actual API calls
-        _liveSoilHumidityByStation[station.id] = 65.0;
-        _liveAmbientHumidityByStation[station.id] = 55.0;
-        _liveTemperatureByStation[station.id] = 24.5;
-        _onlineByStation[station.id] = true;
-      });
+      if (station.deviceId == null) continue;
+      
+      final result = await _getSensorDataUseCase.call(station.id);
+      
+      if (result is Success<SensorData>) {
+        final sensorData = result.data;
+        if (mounted) {
+          setState(() {
+            if (sensorData.soilHumidity != null) {
+              _liveSoilHumidityByStation[station.id] = sensorData.soilHumidity!;
+            }
+            if (sensorData.ambientHumidity != null) {
+              _liveAmbientHumidityByStation[station.id] = sensorData.ambientHumidity!;
+            }
+            if (sensorData.temperature != null) {
+              _liveTemperatureByStation[station.id] = sensorData.temperature!;
+            }
+            _onlineByStation[station.id] = sensorData.isOnline;
+          });
+        }
+      }
     }
     
     // Calculate connected count and alerts
     _connectedCount = _onlineByStation.values.where((v) => v).length;
-    _alertsCount = 0; // TODO: Calculate based on thresholds
+    _alertsCount = _calculateAlerts();
     
     if (mounted) {
       setState(() {});
     }
+  }
+
+  /// Calculate alerts based on station thresholds
+  int _calculateAlerts() {
+    int alerts = 0;
+    for (final station in _stations) {
+      final soilHum = _liveSoilHumidityByStation[station.id];
+      final ambHum = _liveAmbientHumidityByStation[station.id];
+      final temp = _liveTemperatureByStation[station.id];
+      
+      if (soilHum != null) {
+        if (soilHum < station.thresholds.minSoilHumidity ||
+            soilHum > station.thresholds.maxSoilHumidity) {
+          alerts++;
+        }
+      }
+      if (ambHum != null) {
+        if (ambHum < station.thresholds.minAmbientHumidity ||
+            ambHum > station.thresholds.maxAmbientHumidity) {
+          alerts++;
+        }
+      }
+      if (temp != null) {
+        if (temp < station.thresholds.minTemperature ||
+            temp > station.thresholds.maxTemperature) {
+          alerts++;
+        }
+      }
+    }
+    return alerts;
   }
 
   @override

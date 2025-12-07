@@ -2,6 +2,15 @@ import '../../../../core/network/thingsboard_api_client.dart';
 import '../../../../core/errors/exceptions.dart' as core_exceptions;
 import '../models/sensor_data_dto.dart';
 
+/// ThingsBoard telemetry key names
+class TelemetryKeys {
+  static const String soilHumidity = 'soil';
+  static const String ambientHumidity = 'hum';
+  static const String temperature = 'temp';
+  
+  static String get allKeys => '$soilHumidity,$ambientHumidity,$temperature';
+}
+
 /// Remote data source for sensor operations using ThingsBoard
 abstract class SensorRemoteDataSource {
   Future<List<SensorDataDto>> getAllSensorData();
@@ -23,9 +32,8 @@ class SensorRemoteDataSourceImpl implements SensorRemoteDataSource {
   @override
   Future<List<SensorDataDto>> getAllSensorData() async {
     try {
-      // TODO: Implementar obtención de telemetría de todos los dispositivos
-      // Se necesita primero obtener la lista de dispositivos y luego sus datos
-      // Por ahora retornamos lista vacía
+      // This would require fetching all devices first, then their telemetry
+      // For now, return empty list - telemetry should be fetched per device
       return [];
     } catch (e) {
       throw core_exceptions.ServerException('Error fetching sensor data: $e');
@@ -35,13 +43,13 @@ class SensorRemoteDataSourceImpl implements SensorRemoteDataSource {
   @override
   Future<SensorDataDto> getSensorData(String stationId) async {
     try {
-      // TODO: Implementar obtención de telemetría del dispositivo desde ThingsBoard
-      // Endpoint: GET /api/plugins/telemetry/DEVICE/{deviceId}/values/timeseries?keys=soilHumidity,ambientHumidity,temperature
+      // Endpoint: GET /api/plugins/telemetry/DEVICE/{deviceId}/values/timeseries?keys=hum,soil,temp
+      // When no startTs/endTs is provided, ThingsBoard returns only the latest value
       final response = await apiClient.get(
-        '/plugins/telemetry/DEVICE/$stationId/values/timeseries?keys=soilHumidity,ambientHumidity,temperature',
+        '/plugins/telemetry/DEVICE/$stationId/values/timeseries?keys=${TelemetryKeys.allKeys}',
       );
       
-      return SensorDataDto.fromThingsBoardJson(stationId, response);
+      return SensorDataDto.fromThingsBoardTelemetry(stationId, response);
     } catch (e) {
       throw core_exceptions.ServerException('Error fetching sensor data for station $stationId: $e');
     }
@@ -55,7 +63,6 @@ class SensorRemoteDataSourceImpl implements SensorRemoteDataSource {
     required int endTs,
   }) async {
     try {
-      // TODO: Implementar obtención de historial de telemetría desde ThingsBoard
       // Endpoint: GET /api/plugins/telemetry/DEVICE/{deviceId}/values/timeseries?keys={keys}&startTs={startTs}&endTs={endTs}
       final keysParam = keys.join(',');
       final response = await apiClient.get(

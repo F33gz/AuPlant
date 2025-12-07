@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
+import '../../../../core/utils/result.dart';
 import '../../domain/entities/station.dart';
+import '../../domain/entities/sensor_data.dart';
+import '../../domain/usecases/get_sensor_data_usecase.dart';
 import '../widgets/real_time_metric_card.dart';
 import '../widgets/sensor_evolution_card.dart';
 import '../../../../app/routes/app_routes.dart';
@@ -22,13 +26,16 @@ class StationDetailPage extends StatefulWidget {
 }
 
 class _StationDetailPageState extends State<StationDetailPage> {
-  // TODO: Replace with actual API data
+  final GetSensorDataUseCase _getSensorDataUseCase = GetIt.instance<GetSensorDataUseCase>();
+  
+  // Real-time sensor data from ThingsBoard API
   double? _soilHumidity;
   double? _ambientHumidity;
   double? _temperature;
-  // ignore: unused_field - Reserved for future UI timestamp display
   DateTime? _lastUpdate;
   bool? _online;
+  bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -48,15 +55,30 @@ class _StationDetailPageState extends State<StationDetailPage> {
   }
 
   Future<void> _fetchLive() async {
-    // TODO: Implement actual API call to get live data
-    // For now, simulate with placeholder values
-    setState(() {
-      _soilHumidity = 62.5;
-      _ambientHumidity = 55.0;
-      _temperature = 24.3;
-      _lastUpdate = DateTime.now();
-      _online = true;
-    });
+    // Fetch real telemetry data from ThingsBoard
+    final result = await _getSensorDataUseCase.call(widget.station.id);
+    
+    if (!mounted) return;
+    
+    switch (result) {
+      case Success<SensorData> success:
+        setState(() {
+          _soilHumidity = success.data.soilHumidity;
+          _ambientHumidity = success.data.ambientHumidity;
+          _temperature = success.data.temperature;
+          _lastUpdate = success.data.timestamp;
+          _online = success.data.isOnline;
+          _isLoading = false;
+          _error = null;
+        });
+        break;
+      case Error<SensorData> error:
+        setState(() {
+          _isLoading = false;
+          _error = error.failure.message;
+        });
+        break;
+    }
   }
 
   @override
@@ -72,7 +94,61 @@ class _StationDetailPageState extends State<StationDetailPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Datos en Tiempo Real', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+                  // Status indicator row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Datos en Tiempo Real', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+                      if (_isLoading)
+                        const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      else if (_error != null)
+                        Icon(Icons.error_outline, color: AppColors.error, size: 20)
+                      else if (_online == true)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: AppColors.success,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text('En línea', style: AppTextStyles.bodySmall.copyWith(color: AppColors.success)),
+                          ],
+                        )
+                      else
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: AppColors.disabled,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text('Desconectado', style: AppTextStyles.bodySmall.copyWith(color: AppColors.disabled)),
+                          ],
+                        ),
+                    ],
+                  ),
+                  if (_error != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        _error!,
+                        style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
+                      ),
+                    ),
                   const SizedBox(height: 12),
                   
                   // First row: Soil Humidity and Ambient Humidity

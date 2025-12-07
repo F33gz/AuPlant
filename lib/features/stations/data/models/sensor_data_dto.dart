@@ -109,6 +109,73 @@ class SensorDataDto {
     );
   }
 
+  /// Create DTO from ThingsBoard telemetry response with actual API keys
+  /// ThingsBoard keys: soil, hum, temp
+  /// Response format: { "soil": [{"ts": 1234, "value": "50"}], "hum": [...], "temp": [...] }
+  factory SensorDataDto.fromThingsBoardTelemetry(String stationId, Map<String, dynamic> json) {
+    // ThingsBoard API key mappings
+    const soilKey = 'soil';
+    const humKey = 'hum';
+    const tempKey = 'temp';
+
+    // Extract latest values from telemetry arrays
+    double? getLatestValue(String key) {
+      final data = json[key] as List<dynamic>?;
+      if (data == null || data.isEmpty) return null;
+      final latest = data.first as Map<String, dynamic>?;
+      if (latest == null) return null;
+      return _parseDouble(latest['value']);
+    }
+
+    // Extract timestamp from latest reading
+    DateTime? getLatestTimestamp(String key) {
+      final data = json[key] as List<dynamic>?;
+      if (data == null || data.isEmpty) return null;
+      final latest = data.first as Map<String, dynamic>?;
+      if (latest == null) return null;
+      final ts = latest['ts'] as num?;
+      return ts != null ? DateTime.fromMillisecondsSinceEpoch(ts.toInt()) : null;
+    }
+
+    // Extract recent readings from telemetry arrays
+    List<SensorDataPointDto> getReadings(String key) {
+      final data = json[key] as List<dynamic>?;
+      if (data == null) return [];
+      return data.map<SensorDataPointDto>((item) {
+        final point = item as Map<String, dynamic>;
+        return SensorDataPointDto(
+          timestamp: DateTime.fromMillisecondsSinceEpoch(
+            (point['ts'] as num?)?.toInt() ?? 0,
+          ),
+          value: _parseDouble(point['value']) ?? 0.0,
+        );
+      }).toList();
+    }
+
+    // Determine if device is online based on data presence and recency
+    final lastTimestamp = getLatestTimestamp(soilKey) ?? 
+                          getLatestTimestamp(humKey) ?? 
+                          getLatestTimestamp(tempKey);
+    final isOnline = lastTimestamp != null &&
+        DateTime.now().difference(lastTimestamp).inMinutes < 5;
+
+    return SensorDataDto(
+      stationId: stationId,
+      nombre: '',
+      emoji: '🌱',
+      descripcion: '',
+      ubicacion: '',
+      soilHumidity: getLatestValue(soilKey),
+      ambientHumidity: getLatestValue(humKey),
+      temperature: getLatestValue(tempKey),
+      deviceId: stationId,
+      online: isOnline,
+      recentSoilHumidityReadings: getReadings(soilKey),
+      recentAmbientHumidityReadings: getReadings(humKey),
+      recentTemperatureReadings: getReadings(tempKey),
+    );
+  }
+
   /// Convert DTO to domain entity
   SensorData toEntity() {
     return SensorData(

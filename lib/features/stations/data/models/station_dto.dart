@@ -18,6 +18,10 @@ class StationDto {
   final double? maxTemperature;
   final DateTime createdAt;
   final DateTime updatedAt;
+  // ThingsBoard specific fields
+  final bool isActive;
+  final String? customerTitle;
+  final String? deviceProfileName;
 
   const StationDto({
     required this.id,
@@ -34,6 +38,9 @@ class StationDto {
     this.maxTemperature,
     required this.createdAt,
     required this.updatedAt,
+    this.isActive = false,
+    this.customerTitle,
+    this.deviceProfileName,
   });
 
   factory StationDto.fromJson(Map<String, dynamic> json) {
@@ -97,6 +104,40 @@ class StationDto {
           ? DateTime.fromMillisecondsSinceEpoch(json['createdTime'] as int)
           : DateTime.now(),
       updatedAt: DateTime.now(),
+    );
+  }
+
+  /// Create DTO from ThingsBoard deviceInfos endpoint response
+  /// Response format from /api/customer/{customerId}/deviceInfos
+  factory StationDto.fromThingsBoardDeviceInfo(Map<String, dynamic> json) {
+    final id = json['id'] as Map<String, dynamic>?;
+    final deviceId = id?['id'] as String? ?? '';
+    final additionalInfo = json['additionalInfo'] as Map<String, dynamic>?;
+    final isGateway = additionalInfo?['gateway'] == true;
+    
+    return StationDto(
+      id: deviceId,
+      nombre: json['name'] as String? ?? 'Sin nombre',
+      // Use different emoji for gateways
+      emoji: isGateway ? '📡' : '🌱',
+      descripcion: json['type'] as String?,
+      ubicacion: json['label'] as String?,
+      deviceId: deviceId,
+      // These can be loaded from device attributes later
+      minSoilHumidity: null,
+      maxSoilHumidity: null,
+      minAmbientHumidity: null,
+      maxAmbientHumidity: null,
+      minTemperature: null,
+      maxTemperature: null,
+      createdAt: json['createdTime'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(json['createdTime'] as int)
+          : DateTime.now(),
+      updatedAt: DateTime.now(),
+      // Additional ThingsBoard specific fields
+      isActive: json['active'] as bool? ?? false,
+      customerTitle: json['customerTitle'] as String?,
+      deviceProfileName: json['deviceProfileName'] as String?,
     );
   }
 
