@@ -1,6 +1,7 @@
 import '../../../../core/utils/result.dart';
 import '../entities/station.dart';
 import '../entities/sensor_data.dart';
+import '../entities/telemetry_history.dart';
 
 /// Abstract repository for station operations
 /// 
@@ -45,4 +46,13 @@ abstract class StationRepository {
   
   /// Get sensor data for all stations
   Future<Result<List<SensorData>>> getAllSensorData();
+  
+  /// Get historical sensor data for a station
+  /// 
+  /// [stationId] - The station/device ID
+  /// [timeRange] - Time range for historical data (e.g., last 24 hours)
+  Future<Result<SensorHistoryData>> getSensorHistory(
+    String stationId,
+    HistoryTimeRange timeRange,
+  );
 }

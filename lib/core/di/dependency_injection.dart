@@ -21,6 +21,7 @@ import '../../features/stations/domain/repositories/station_repository.dart';
 import '../../features/stations/domain/usecases/get_stations_usecase.dart';
 import '../../features/stations/domain/usecases/add_station_usecase.dart';
 import '../../features/stations/domain/usecases/get_sensor_data_usecase.dart';
+import '../../features/stations/domain/usecases/get_sensor_history_usecase.dart';
 import '../../features/stations/domain/usecases/update_station_usecase.dart';
 import '../../features/stations/domain/usecases/delete_station_usecase.dart';
 
@@ -96,6 +97,7 @@ Future<void> initializeDependencies() async {
   sl.registerLazySingleton(() => GetStationsUseCase(sl<StationRepository>()));
   sl.registerLazySingleton(() => AddStationUseCase(sl<StationRepository>()));
   sl.registerLazySingleton(() => GetSensorDataUseCase(sl<StationRepository>()));
+  sl.registerLazySingleton(() => GetSensorHistoryUseCase(sl<StationRepository>()));
   sl.registerLazySingleton(() => UpdateStationUseCase(sl<StationRepository>()));
   sl.registerLazySingleton(() => DeleteStationUseCase(sl<StationRepository>()));
 }

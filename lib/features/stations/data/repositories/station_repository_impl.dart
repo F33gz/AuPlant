@@ -3,6 +3,7 @@ import '../../../../core/errors/failures.dart';
 import '../../../../core/utils/result.dart';
 import '../../domain/entities/station.dart';
 import '../../domain/entities/sensor_data.dart';
+import '../../domain/entities/telemetry_history.dart';
 import '../../domain/repositories/station_repository.dart';
 import '../datasources/station_remote_datasource.dart';
 import '../datasources/sensor_remote_datasource.dart';
@@ -160,6 +161,37 @@ class StationRepositoryImpl implements StationRepository {
       final sensorDtos = await sensorRemoteDataSource.getAllSensorData();
       final sensorData = sensorDtos.map((dto) => dto.toEntity()).toList();
       return Success(sensorData);
+    } on ServerException catch (e) {
+      return Error(ServerFailure(e.message, code: e.code));
+    } on NetworkException catch (e) {
+      return Error(NetworkFailure(e.message, code: e.code));
+    } on AuthException catch (e) {
+      return Error(AuthFailure(e.message, code: e.code));
+    } catch (e) {
+      return Error(ServerFailure('Unexpected error: $e'));
+    }
+  }
+
+  @override
+  Future<Result<SensorHistoryData>> getSensorHistory(
+    String stationId,
+    HistoryTimeRange timeRange,
+  ) async {
+    try {
+      final now = DateTime.now();
+      final endTs = now.millisecondsSinceEpoch;
+      final startTs = now.subtract(timeRange.duration).millisecondsSinceEpoch;
+      
+      final historyDto = await sensorRemoteDataSource.getSensorHistory(
+        deviceId: stationId,
+        startTs: startTs,
+        endTs: endTs,
+      );
+      
+      return Success(historyDto.toEntity(
+        startTime: DateTime.fromMillisecondsSinceEpoch(startTs),
+        endTime: now,
+      ));
     } on ServerException catch (e) {
       return Error(ServerFailure(e.message, code: e.code));
     } on NetworkException catch (e) {

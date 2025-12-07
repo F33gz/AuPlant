@@ -1,6 +1,7 @@
 import '../../../../core/network/thingsboard_api_client.dart';
 import '../../../../core/errors/exceptions.dart' as core_exceptions;
 import '../models/sensor_data_dto.dart';
+import '../models/telemetry_history_dto.dart';
 
 /// ThingsBoard telemetry key names
 class TelemetryKeys {
@@ -9,17 +10,25 @@ class TelemetryKeys {
   static const String temperature = 'temp';
   
   static String get allKeys => '$soilHumidity,$ambientHumidity,$temperature';
+  static List<String> get allKeysList => [soilHumidity, ambientHumidity, temperature];
 }
 
 /// Remote data source for sensor operations using ThingsBoard
 abstract class SensorRemoteDataSource {
   Future<List<SensorDataDto>> getAllSensorData();
   Future<SensorDataDto> getSensorData(String stationId);
-  Future<Map<String, List<Map<String, dynamic>>>> getSensorHistory({
+  
+  /// Get historical telemetry data for a device
+  /// 
+  /// [deviceId] - ThingsBoard device ID
+  /// [startTs] - Start timestamp in milliseconds (Unix epoch)
+  /// [endTs] - End timestamp in milliseconds (Unix epoch)
+  /// [keys] - Optional list of telemetry keys (defaults to all: soil, hum, temp)
+  Future<TelemetryHistoryDto> getSensorHistory({
     required String deviceId,
-    required List<String> keys,
     required int startTs,
     required int endTs,
+    List<String>? keys,
   });
 }
 
@@ -56,29 +65,20 @@ class SensorRemoteDataSourceImpl implements SensorRemoteDataSource {
   }
 
   @override
-  Future<Map<String, List<Map<String, dynamic>>>> getSensorHistory({
+  Future<TelemetryHistoryDto> getSensorHistory({
     required String deviceId,
-    required List<String> keys,
     required int startTs,
     required int endTs,
+    List<String>? keys,
   }) async {
     try {
       // Endpoint: GET /api/plugins/telemetry/DEVICE/{deviceId}/values/timeseries?keys={keys}&startTs={startTs}&endTs={endTs}
-      final keysParam = keys.join(',');
+      final keysParam = (keys ?? TelemetryKeys.allKeysList).join(',');
       final response = await apiClient.get(
         '/plugins/telemetry/DEVICE/$deviceId/values/timeseries?keys=$keysParam&startTs=$startTs&endTs=$endTs',
       );
       
-      // Parse response into expected format
-      final result = <String, List<Map<String, dynamic>>>{};
-      for (final key in keys) {
-        if (response[key] != null) {
-          result[key] = (response[key] as List)
-              .map((e) => e as Map<String, dynamic>)
-              .toList();
-        }
-      }
-      return result;
+      return TelemetryHistoryDto.fromThingsBoardResponse(deviceId, response);
     } catch (e) {
       throw core_exceptions.ServerException('Error fetching sensor history: $e');
     }
