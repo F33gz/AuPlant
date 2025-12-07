@@ -1,0 +1,167 @@
+import 'package:flutter/material.dart';
+import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/app_text_styles.dart';
+import '../../../../shared/constants/ui_constants.dart';
+
+/// Reusable login form widget
+class LoginForm extends StatefulWidget {
+  final VoidCallback? onLogin;
+  final bool isLoading;
+
+  const LoginForm({
+    super.key,
+    this.onLogin,
+    this.isLoading = false,
+  });
+
+  @override
+  State<LoginForm> createState() => _LoginFormState();
+}
+
+class _LoginFormState extends State<LoginForm> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  
+  bool _obscurePassword = true;
+  bool _rememberMe = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        children: [
+          // Email field
+          TextFormField(
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+            decoration: InputDecoration(
+              labelText: 'Correo electrónico',
+              prefixIcon: const Icon(Icons.email_outlined),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(UIConstants.radiusM),
+              ),
+              filled: true,
+              fillColor: AppColors.backgroundWhite,
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Por favor ingresa tu correo electrónico';
+              }
+              if (!value.contains('@') || !value.contains('.')) {
+                return 'Por favor ingresa un correo válido';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: UIConstants.spacingL),
+          
+          // Password field
+          TextFormField(
+            controller: _passwordController,
+            obscureText: _obscurePassword,
+            decoration: InputDecoration(
+              labelText: 'Contraseña',
+              prefixIcon: const Icon(Icons.lock_outlined),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscurePassword 
+                      ? Icons.visibility_outlined 
+                      : Icons.visibility_off_outlined,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _obscurePassword = !_obscurePassword;
+                  });
+                },
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(UIConstants.radiusM),
+              ),
+              filled: true,
+              fillColor: AppColors.backgroundWhite,
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Por favor ingresa tu contraseña';
+              }
+              if (value.length < 6) {
+                return 'La contraseña debe tener al menos 6 caracteres';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: UIConstants.spacingL),
+          
+          // Remember me checkbox
+          Row(
+            children: [
+              Checkbox(
+                value: _rememberMe,
+                onChanged: (value) {
+                  setState(() {
+                    _rememberMe = value ?? false;
+                  });
+                },
+                activeColor: AppColors.primaryGreen,
+              ),
+              Text(
+                'Recuérdame',
+                style: AppTextStyles.bodyMedium,
+              ),
+            ],
+          ),
+          const SizedBox(height: UIConstants.spacingXXL),
+          
+          // Login button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: widget.isLoading ? null : _handleLogin,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryGreen,
+                padding: const EdgeInsets.symmetric(vertical: UIConstants.paddingL),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(UIConstants.radiusM),
+                ),
+              ),
+              child: widget.isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : Text(
+                      'Iniciar sesión',
+                      style: AppTextStyles.bodyLarge.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handleLogin() {
+    if (_formKey.currentState!.validate()) {
+      widget.onLogin?.call();
+    }
+  }
+
+  String get email => _emailController.text.trim();
+  String get password => _passwordController.text.trim();
+}
