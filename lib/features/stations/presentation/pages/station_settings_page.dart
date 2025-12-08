@@ -2,18 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/utils/result.dart';
+import '../../../../core/services/telemetry_monitor_service.dart';
+import '../../../../core/services/local_thresholds_storage.dart';
+import '../../../../core/services/local_station_settings_storage.dart';
 import '../widgets/station_basic_info_form.dart';
 import '../widgets/station_emoji_selector.dart';
 import '../widgets/station_threshold_settings.dart';
 import '../widgets/station_danger_zone.dart';
 import '../../domain/entities/station.dart';
-import '../../domain/usecases/update_station_usecase.dart';
 import '../../domain/usecases/delete_station_usecase.dart';
 import '../widgets/settings_section.dart';
 
 /// Station Settings Page
 /// 
 /// Configuration page for a greenhouse monitoring station
+/// Los umbrales se guardan localmente (SharedPreferences), no se envían al servidor.
 class StationSettingsPage extends StatefulWidget {
   final Station station;
 
@@ -40,30 +43,63 @@ class _StationSettingsPageState extends State<StationSettingsPage> {
   
   bool _isLoading = false;
   bool _hasUnsavedChanges = false;
+  bool _isLoadingThresholds = true;
 
-  final UpdateStationUseCase _updateStationUseCase = GetIt.instance<UpdateStationUseCase>();
   final DeleteStationUseCase _deleteStationUseCase = GetIt.instance<DeleteStationUseCase>();
 
   @override
   void initState() {
     super.initState();
     _initializeControllers();
-    _initializeValues();
+    _loadLocalSettings();
   }
 
   void _initializeControllers() {
     _nameController = TextEditingController(text: widget.station.name);
     _locationController = TextEditingController(text: widget.station.location ?? '');
-  }
-
-  void _initializeValues() {
     _selectedEmoji = widget.station.emoji;
+    
+    // Inicializar con valores por defecto de la estación
     _minSoilHumidity = widget.station.thresholds.minSoilHumidity;
     _maxSoilHumidity = widget.station.thresholds.maxSoilHumidity;
     _minAmbientHumidity = widget.station.thresholds.minAmbientHumidity;
     _maxAmbientHumidity = widget.station.thresholds.maxAmbientHumidity;
     _minTemperature = widget.station.thresholds.minTemperature;
     _maxTemperature = widget.station.thresholds.maxTemperature;
+  }
+
+  /// Carga los ajustes guardados localmente (umbrales e info básica)
+  Future<void> _loadLocalSettings() async {
+    // Cargar umbrales locales
+    final localThresholds = await LocalThresholdsStorage.instance
+        .getThresholds(widget.station.id);
+    
+    // Cargar info básica local (nombre, emoji, ubicación)
+    final localInfo = await LocalStationSettingsStorage.instance
+        .getSettings(widget.station.id);
+    
+    if (mounted) {
+      setState(() {
+        // Aplicar umbrales locales si existen
+        if (localThresholds != null) {
+          _minSoilHumidity = localThresholds.minSoilHumidity;
+          _maxSoilHumidity = localThresholds.maxSoilHumidity;
+          _minAmbientHumidity = localThresholds.minAmbientHumidity;
+          _maxAmbientHumidity = localThresholds.maxAmbientHumidity;
+          _minTemperature = localThresholds.minTemperature;
+          _maxTemperature = localThresholds.maxTemperature;
+        }
+        
+        // Aplicar info básica local si existe
+        if (localInfo != null) {
+          _nameController.text = localInfo.name;
+          _selectedEmoji = localInfo.emoji;
+          _locationController.text = localInfo.location ?? '';
+        }
+        
+        _isLoadingThresholds = false;
+      });
+    }
   }
 
   @override
@@ -220,16 +256,13 @@ class _StationSettingsPageState extends State<StationSettingsPage> {
     });
   }
   
+  /// Guarda todos los ajustes localmente (no envía nada al servidor)
   Future<void> _saveChanges() async {
     setState(() => _isLoading = true);
     
     try {
-      final result = await _updateStationUseCase.call(
-        stationId: widget.station.id,
-        name: _nameController.text.trim(),
-        emoji: _selectedEmoji,
-        location: _locationController.text.trim(),
-        deviceId: widget.station.deviceId,
+      // Crear los nuevos umbrales
+      final newThresholds = StationThresholds(
         minSoilHumidity: _minSoilHumidity,
         maxSoilHumidity: _maxSoilHumidity,
         minAmbientHumidity: _minAmbientHumidity,
@@ -238,39 +271,49 @@ class _StationSettingsPageState extends State<StationSettingsPage> {
         maxTemperature: _maxTemperature,
       );
       
-      switch (result) {
-        case Success():
-          setState(() {
-            _hasUnsavedChanges = false;
-            _isLoading = false;
-          });
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Configuración guardada'),
-                backgroundColor: AppColors.primaryGreen,
-              ),
-            );
-          }
-          break;
-        case Error(failure: final failure):
-          setState(() => _isLoading = false);
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error: ${failure.message}'),
-                backgroundColor: AppColors.error,
-              ),
-            );
-          }
-          break;
+      // Guardar umbrales localmente
+      await LocalThresholdsStorage.instance.saveThresholds(
+        widget.station.id,
+        newThresholds,
+      );
+      
+      // Guardar info básica localmente (nombre, emoji, ubicación)
+      await LocalStationSettingsStorage.instance.saveSettings(
+        widget.station.id,
+        LocalStationSettings(
+          name: _nameController.text.trim(),
+          emoji: _selectedEmoji,
+          location: _locationController.text.trim().isEmpty 
+              ? null 
+              : _locationController.text.trim(),
+        ),
+      );
+      
+      // Actualizar los umbrales en el monitor de telemetría para las notificaciones
+      TelemetryMonitorService.instance.updateStationThresholds(
+        widget.station.id,
+        newThresholds,
+      );
+      
+      setState(() {
+        _hasUnsavedChanges = false;
+        _isLoading = false;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Configuración guardada localmente'),
+            backgroundColor: AppColors.primaryGreen,
+          ),
+        );
       }
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error inesperado: $e'),
+            content: Text('Error al guardar: $e'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -286,6 +329,9 @@ class _StationSettingsPageState extends State<StationSettingsPage> {
       
       switch (result) {
         case Success():
+          // Refrescar las estaciones en el monitor de telemetría
+          TelemetryMonitorService.instance.refreshStations();
+          
           if (mounted) {
             Navigator.of(context).pop('deleted');
           }

@@ -3,7 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
-// Native timezone plugin removed; using timezone DB with fallback
+import '../../../../core/services/threshold_notification_preferences.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -16,7 +16,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
   final _fln = FlutterLocalNotificationsPlugin();
   bool _reminderEnabled = false;
   TimeOfDay _reminderTime = const TimeOfDay(hour: 9, minute: 0);
-  bool _thresholdAlerts = true;
+  
+  // Alertas de umbrales
+  bool _thresholdAlertsGlobal = true;
+  bool _temperatureAlerts = true;
+  bool _soilHumidityAlerts = true;
+  bool _ambientHumidityAlerts = true;
 
   @override
   void initState() {
@@ -53,14 +58,24 @@ class _NotificationsPageState extends State<NotificationsPage> {
     }
     if (!set) tz.setLocalLocation(tz.getLocation('UTC'));
 
+    // Cargar preferencias de recordatorio de riego
     final prefs = await SharedPreferences.getInstance();
+    final reminderEnabled = prefs.getBool('notif_watering_enabled') ?? false;
+    final hour = prefs.getInt('notif_watering_hour') ?? 9;
+    final minute = prefs.getInt('notif_watering_minute') ?? 0;
+    
+    // Cargar preferencias de umbrales
+    final thresholdPrefs = await ThresholdNotificationPreferences.instance.getSettings();
+    
     setState(() {
-      _reminderEnabled = prefs.getBool('notif_watering_enabled') ?? false;
-      final hour = prefs.getInt('notif_watering_hour') ?? 9;
-      final minute = prefs.getInt('notif_watering_minute') ?? 0;
+      _reminderEnabled = reminderEnabled;
       _reminderTime = TimeOfDay(hour: hour, minute: minute);
-      _thresholdAlerts = prefs.getBool('notif_threshold_alerts') ?? true;
+      _thresholdAlertsGlobal = thresholdPrefs.globalEnabled;
+      _temperatureAlerts = thresholdPrefs.temperatureEnabled;
+      _soilHumidityAlerts = thresholdPrefs.soilHumidityEnabled;
+      _ambientHumidityAlerts = thresholdPrefs.ambientHumidityEnabled;
     });
+    
     if (_reminderEnabled) {
       _scheduleDailyReminder();
     }
@@ -103,7 +118,17 @@ class _NotificationsPageState extends State<NotificationsPage> {
     await prefs.setBool('notif_watering_enabled', _reminderEnabled);
     await prefs.setInt('notif_watering_hour', _reminderTime.hour);
     await prefs.setInt('notif_watering_minute', _reminderTime.minute);
-    await prefs.setBool('notif_threshold_alerts', _thresholdAlerts);
+    
+    // Guardar preferencias de umbrales
+    await ThresholdNotificationPreferences.instance.saveSettings(
+      ThresholdNotificationSettings(
+        globalEnabled: _thresholdAlertsGlobal,
+        temperatureEnabled: _temperatureAlerts,
+        soilHumidityEnabled: _soilHumidityAlerts,
+        ambientHumidityEnabled: _ambientHumidityAlerts,
+      ),
+    );
+    
     if (_reminderEnabled) {
       await _scheduleDailyReminder();
     } else {
@@ -113,51 +138,179 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final disabledColor = theme.disabledColor;
+    
     return Scaffold(
       appBar: AppBar(title: const Text('Notificaciones')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          SwitchListTile(
-            title: const Text('Recordatorio de regar'),
-            subtitle: const Text('Recibe un recordatorio diario a una hora específica'),
-            value: _reminderEnabled,
-            onChanged: (v) async {
-              setState(() => _reminderEnabled = v);
-              await _persistAndApply();
-            },
-          ),
-          ListTile(
-            title: const Text('Hora del recordatorio'),
-            subtitle: Text(_reminderTime.format(context)),
-            enabled: _reminderEnabled,
-            trailing: const Icon(Icons.schedule),
-            onTap: !_reminderEnabled
-                ? null
-                : () async {
-                    final picked = await showTimePicker(
-                      context: context,
-                      initialTime: _reminderTime,
-                    );
-                    if (picked != null) {
-                      setState(() => _reminderTime = picked);
-                      await _persistAndApply();
-                    }
+          // Sección: Recordatorios de riego
+          _buildSectionHeader(context, 'Recordatorios de riego', Icons.water_drop),
+          const SizedBox(height: 8),
+          Card(
+            child: Column(
+              children: [
+                SwitchListTile(
+                  title: const Text('Recordatorio diario'),
+                  subtitle: const Text('Recibe un recordatorio para revisar tus plantas'),
+                  value: _reminderEnabled,
+                  onChanged: (v) async {
+                    setState(() => _reminderEnabled = v);
+                    await _persistAndApply();
                   },
+                ),
+                ListTile(
+                  title: const Text('Hora del recordatorio'),
+                  subtitle: Text(_reminderTime.format(context)),
+                  enabled: _reminderEnabled,
+                  trailing: Icon(Icons.schedule, color: _reminderEnabled ? null : disabledColor),
+                  onTap: !_reminderEnabled
+                      ? null
+                      : () async {
+                          final picked = await showTimePicker(
+                            context: context,
+                            initialTime: _reminderTime,
+                          );
+                          if (picked != null) {
+                            setState(() => _reminderTime = picked);
+                            await _persistAndApply();
+                          }
+                        },
+                ),
+              ],
+            ),
           ),
-          const Divider(height: 32),
-          SwitchListTile(
-            title: const Text('Alertas por humedad baja'),
-            subtitle: const Text('Notificar cuando la humedad baje del umbral configurado'),
-            value: _thresholdAlerts,
-            onChanged: (v) async {
-              setState(() => _thresholdAlerts = v);
-              await _persistAndApply();
-            },
+          
+          const SizedBox(height: 24),
+          
+          // Sección: Alertas por umbrales
+          _buildSectionHeader(context, 'Alertas por umbrales', Icons.notifications_active),
+          const SizedBox(height: 8),
+          Card(
+            child: Column(
+              children: [
+                SwitchListTile(
+                  title: const Text('Alertas activas'),
+                  subtitle: const Text('Habilitar todas las alertas por umbrales'),
+                  value: _thresholdAlertsGlobal,
+                  onChanged: (v) async {
+                    setState(() => _thresholdAlertsGlobal = v);
+                    await _persistAndApply();
+                  },
+                ),
+                const Divider(height: 1),
+                SwitchListTile(
+                  title: Row(
+                    children: [
+                      Icon(
+                        Icons.thermostat,
+                        size: 20,
+                        color: _thresholdAlertsGlobal ? theme.colorScheme.primary : disabledColor,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text('Temperatura'),
+                    ],
+                  ),
+                  subtitle: const Text('Alertar cuando salga del rango configurado'),
+                  value: _temperatureAlerts && _thresholdAlertsGlobal,
+                  onChanged: _thresholdAlertsGlobal
+                      ? (v) async {
+                          setState(() => _temperatureAlerts = v);
+                          await _persistAndApply();
+                        }
+                      : null,
+                ),
+                SwitchListTile(
+                  title: Row(
+                    children: [
+                      Icon(
+                        Icons.grass,
+                        size: 20,
+                        color: _thresholdAlertsGlobal ? theme.colorScheme.primary : disabledColor,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text('Humedad del suelo'),
+                    ],
+                  ),
+                  subtitle: const Text('Alertar cuando salga del rango configurado'),
+                  value: _soilHumidityAlerts && _thresholdAlertsGlobal,
+                  onChanged: _thresholdAlertsGlobal
+                      ? (v) async {
+                          setState(() => _soilHumidityAlerts = v);
+                          await _persistAndApply();
+                        }
+                      : null,
+                ),
+                SwitchListTile(
+                  title: Row(
+                    children: [
+                      Icon(
+                        Icons.water,
+                        size: 20,
+                        color: _thresholdAlertsGlobal ? theme.colorScheme.primary : disabledColor,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text('Humedad ambiente'),
+                    ],
+                  ),
+                  subtitle: const Text('Alertar cuando salga del rango configurado'),
+                  value: _ambientHumidityAlerts && _thresholdAlertsGlobal,
+                  onChanged: _thresholdAlertsGlobal
+                      ? (v) async {
+                          setState(() => _ambientHumidityAlerts = v);
+                          await _persistAndApply();
+                        }
+                      : null,
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 12),
+          
+          const SizedBox(height: 16),
+          
+          // Nota informativa
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, size: 20, color: theme.colorScheme.primary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Los umbrales se configuran por estación en la configuración de cada una. Las alertas se envían una vez al día por cada tipo.',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 24),
         ],
       ),
+    );
+  }
+  
+  Widget _buildSectionHeader(BuildContext context, String title, IconData icon) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: theme.colorScheme.primary),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: theme.colorScheme.primary,
+          ),
+        ),
+      ],
     );
   }
 }

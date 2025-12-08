@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/utils/result.dart';
+import '../../../../core/services/telemetry_monitor_service.dart';
 import '../../../../shared/constants/ui_constants.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../widgets/auth_logo.dart';
@@ -58,7 +59,10 @@ class _LoginPageState extends State<LoginPage> {
       );
       
       result.when(
-        success: (user) {
+        success: (user) async {
+          // Iniciar el monitor de telemetría para notificaciones
+          await TelemetryMonitorService.instance.start();
+          
           if (mounted) {
             Navigator.pushReplacementNamed(context, '/');
           }

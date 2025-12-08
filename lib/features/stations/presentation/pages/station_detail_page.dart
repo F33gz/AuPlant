@@ -4,6 +4,7 @@ import 'package:get_it/get_it.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../core/utils/result.dart';
+import '../../../../core/utils/station_data_merger.dart';
 import '../../../../core/network/thingsboard_websocket_client.dart';
 import '../../domain/entities/station.dart';
 import '../../domain/entities/sensor_data.dart';
@@ -32,6 +33,9 @@ class _StationDetailPageState extends State<StationDetailPage> {
   final GetSensorDataUseCase _getSensorDataUseCase = GetIt.instance<GetSensorDataUseCase>();
   final ThingsBoardWebSocketClient _wsClient = GetIt.instance<ThingsBoardWebSocketClient>();
   
+  // Estación actual (puede cambiar si se actualizan los ajustes locales)
+  late Station _currentStation;
+  
   // Real-time sensor data from ThingsBoard WebSocket
   double? _soilHumidity;
   double? _ambientHumidity;
@@ -48,7 +52,18 @@ class _StationDetailPageState extends State<StationDetailPage> {
   @override
   void initState() {
     super.initState();
+    _currentStation = widget.station;
     _initializeData();
+  }
+
+  /// Recarga los datos locales de la estación
+  Future<void> _reloadLocalStationData() async {
+    final merged = await StationDataMerger.mergeWithLocalData(widget.station);
+    if (mounted) {
+      setState(() {
+        _currentStation = merged;
+      });
+    }
   }
 
   Future<void> _initializeData() async {
@@ -67,13 +82,13 @@ class _StationDetailPageState extends State<StationDetailPage> {
       if (connected && mounted) {
         // Subscribe to telemetry updates for this device
         _subscriptionCmdId = _wsClient.subscribeToDevice(
-          widget.station.id,
+          _currentStation.id,
           keys: ['soil', 'hum', 'temp'],
         );
         
         // Listen for updates
         _wsSubscription = _wsClient.telemetryStream
-            .where((update) => update.deviceId == widget.station.id)
+            .where((update) => update.deviceId == _currentStation.id)
             .listen(_handleTelemetryUpdate, onError: _handleWebSocketError);
         
         if (mounted) {
@@ -123,7 +138,7 @@ class _StationDetailPageState extends State<StationDetailPage> {
 
   Future<void> _fetchLive() async {
     // Fetch real telemetry data from ThingsBoard REST API
-    final result = await _getSensorDataUseCase.call(widget.station.id);
+    final result = await _getSensorDataUseCase.call(_currentStation.id);
     
     if (!mounted) return;
     
@@ -236,9 +251,9 @@ class _StationDetailPageState extends State<StationDetailPage> {
                           icon: Icons.water_drop,
                           title: 'Humedad Suelo',
                           value: _soilHumidity == null ? 'N/A' : '${_soilHumidity!.toStringAsFixed(1)}%',
-                          statusLabel: _statusLabelFor(_soilHumidity, widget.station.thresholds.minSoilHumidity, widget.station.thresholds.maxSoilHumidity),
-                          statusColor: _statusColorFor(_soilHumidity, widget.station.thresholds.minSoilHumidity, widget.station.thresholds.maxSoilHumidity),
-                          rangeText: 'Rango: ${widget.station.thresholds.minSoilHumidity.toStringAsFixed(0)}-${widget.station.thresholds.maxSoilHumidity.toStringAsFixed(0)}%',
+                          statusLabel: _statusLabelFor(_soilHumidity, _currentStation.thresholds.minSoilHumidity, _currentStation.thresholds.maxSoilHumidity),
+                          statusColor: _statusColorFor(_soilHumidity, _currentStation.thresholds.minSoilHumidity, _currentStation.thresholds.maxSoilHumidity),
+                          rangeText: 'Rango: ${_currentStation.thresholds.minSoilHumidity.toStringAsFixed(0)}-${_currentStation.thresholds.maxSoilHumidity.toStringAsFixed(0)}%',
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -247,9 +262,9 @@ class _StationDetailPageState extends State<StationDetailPage> {
                           icon: Icons.cloud,
                           title: 'Humedad Ambiente',
                           value: _ambientHumidity == null ? 'N/A' : '${_ambientHumidity!.toStringAsFixed(1)}%',
-                          statusLabel: _statusLabelFor(_ambientHumidity, widget.station.thresholds.minAmbientHumidity, widget.station.thresholds.maxAmbientHumidity),
-                          statusColor: _statusColorFor(_ambientHumidity, widget.station.thresholds.minAmbientHumidity, widget.station.thresholds.maxAmbientHumidity),
-                          rangeText: 'Rango: ${widget.station.thresholds.minAmbientHumidity.toStringAsFixed(0)}-${widget.station.thresholds.maxAmbientHumidity.toStringAsFixed(0)}%',
+                          statusLabel: _statusLabelFor(_ambientHumidity, _currentStation.thresholds.minAmbientHumidity, _currentStation.thresholds.maxAmbientHumidity),
+                          statusColor: _statusColorFor(_ambientHumidity, _currentStation.thresholds.minAmbientHumidity, _currentStation.thresholds.maxAmbientHumidity),
+                          rangeText: 'Rango: ${_currentStation.thresholds.minAmbientHumidity.toStringAsFixed(0)}-${_currentStation.thresholds.maxAmbientHumidity.toStringAsFixed(0)}%',
                         ),
                       ),
                     ],
@@ -262,15 +277,15 @@ class _StationDetailPageState extends State<StationDetailPage> {
                     icon: Icons.thermostat,
                     title: 'Temperatura',
                     value: _temperature == null ? 'N/A' : '${_temperature!.toStringAsFixed(1)}°C',
-                    statusLabel: _statusLabelFor(_temperature, widget.station.thresholds.minTemperature, widget.station.thresholds.maxTemperature),
-                    statusColor: _statusColorFor(_temperature, widget.station.thresholds.minTemperature, widget.station.thresholds.maxTemperature),
-                    rangeText: 'Rango: ${widget.station.thresholds.minTemperature.toStringAsFixed(0)}-${widget.station.thresholds.maxTemperature.toStringAsFixed(0)}°C',
+                    statusLabel: _statusLabelFor(_temperature, _currentStation.thresholds.minTemperature, _currentStation.thresholds.maxTemperature),
+                    statusColor: _statusColorFor(_temperature, _currentStation.thresholds.minTemperature, _currentStation.thresholds.maxTemperature),
+                    rangeText: 'Rango: ${_currentStation.thresholds.minTemperature.toStringAsFixed(0)}-${_currentStation.thresholds.maxTemperature.toStringAsFixed(0)}°C',
                   ),
 
                   const SizedBox(height: 24),
                   Text('Evolución de Sensores', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
-                  SensorEvolutionCard(stationId: widget.station.id),
+                  SensorEvolutionCard(stationId: _currentStation.id),
 
                   const SizedBox(height: 24),
                   _buildSettingsButton(),
@@ -293,11 +308,14 @@ class _StationDetailPageState extends State<StationDetailPage> {
         onPressed: () async {
           final result = await Navigator.of(context).pushNamed(
             AppRoutes.stationSettings,
-            arguments: widget.station,
+            arguments: _currentStation,
           );
           if (!mounted) return;
           if (result == 'deleted') {
             Navigator.of(context).pop('deleted');
+          } else {
+            // Recargar datos locales por si cambiaron los ajustes
+            await _reloadLocalStationData();
           }
         },
         icon: Icon(Icons.settings, color: cs.primary),
@@ -323,10 +341,10 @@ class _StationDetailPageState extends State<StationDetailPage> {
         titlePadding: const EdgeInsetsDirectional.only(start: 56, bottom: 12, end: 16),
         title: Row(
           children: [
-            Text(widget.station.emoji, style: const TextStyle(fontSize: 18)),
+            Text(_currentStation.emoji, style: const TextStyle(fontSize: 18)),
             const SizedBox(width: 8),
             Expanded(
-              child: Text(widget.station.name, overflow: TextOverflow.ellipsis, style: AppTextStyles.titleSmall),
+              child: Text(_currentStation.name, overflow: TextOverflow.ellipsis, style: AppTextStyles.titleSmall),
             ),
           ],
         ),
@@ -341,7 +359,7 @@ class _StationDetailPageState extends State<StationDetailPage> {
               ],
             ),
           ),
-          child: Center(child: Text(widget.station.emoji, style: const TextStyle(fontSize: 80))),
+          child: Center(child: Text(_currentStation.emoji, style: const TextStyle(fontSize: 80))),
         ),
       ),
       actions: [

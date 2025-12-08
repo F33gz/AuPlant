@@ -5,6 +5,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../shared/constants/ui_constants.dart';
 import '../../../../core/utils/result.dart';
+import '../../../../core/utils/station_data_merger.dart';
 import '../../../../core/network/thingsboard_websocket_client.dart';
 import '../../../../shared/widgets/empty_state_widget.dart';
 import '../widgets/overview_stat_card.dart';
@@ -79,8 +80,10 @@ class _StationsOverviewPageState extends State<StationsOverviewPage> {
     
     switch (result) {
       case Success<List<Station>> success:
+        // Combinar datos del servidor con datos locales (nombre, emoji, umbrales)
+        final mergedStations = await StationDataMerger.mergeListWithLocalData(success.data);
         setState(() {
-          _stations = success.data;
+          _stations = mergedStations;
           _isLoading = false;
         });
         // First load initial data via REST, then connect WebSocket
